@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <sstream>
 #include <iostream>
+#include <string.h>
 #include "claudio.hh"
 
 namespace {
@@ -181,14 +182,13 @@ std::vector<claudio_ev*> claudio::loop() {
       if (err != CAEN_DGTZ_Success) std::cout << " CAEN_DGTZ_DecodeEvent(" << handle_ << "," << event_ptr << ", NULL): " << caen_error (err); 
 
       CAEN_DGTZ_UINT16_EVENT_t *decoded_event = reinterpret_cast<CAEN_DGTZ_UINT16_EVENT_t*>(decoded_event_);
-      int total_samples = 0;
-//      for (int k = 0; k < MAX_UINT16_CHANNEL_SIZE; k++) {
-//        decoded_event->ChSize[k] = (decoded_event->ChSize[k] / 2) * 2; // even samples
-//	total_samples += decoded_event->ChSize[k];
-//      }
 
-//      ev_v.push_back (ev);
-      //reinterpret_cast<V172xFragment::Header *>(raw_event_)->event_size = total_samples / 2 * sizeof (uint32_t) + sizeof (V172xFragment::Header) / sizeof (uint32_t);
+      claudio_ev *ev = reinterpret_cast<claudio_ev*>(new u_int16_t[4 + decoded_event->ChSize[1]]);
+      ev->time_tag = event_info.TriggerTimeTag;
+      ev->size = 4 + decoded_event->ChSize[1];
+      memcpy (ev->samples, decoded_event->DataChannel[1], decoded_event->ChSize[1] * 2);
+      
+      ev_v.push_back (ev);
     }
   }
   return ev_v;

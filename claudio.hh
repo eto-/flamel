@@ -5,7 +5,8 @@
 #include <vector>
 
 struct claudio_ev {
-  u_int16_t size, time_tag, samples[0];
+  u_int32_t size, time_tag;
+  u_int16_t samples[0];
 };
  
 class claudio {
