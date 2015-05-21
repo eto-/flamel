@@ -1,8 +1,11 @@
 #include <iostream>
 #include <stdexcept>
 #include "claudio.hh"
+#include "sibilla.hh"
 
-int main () {
+int main (int argc, char* argv[]) {
+  sibilla::get ().parse (argc, argv);
+
   claudio c;
   c.init ();
   c.start ();

@@ -9,6 +9,7 @@
 #include <string.h>
 #include "claudio.hh"
 #include "attila.hh"
+#include "sibilla.hh"
 
 namespace {
   const std::string caen_error (CAEN_DGTZ_ErrorCode err) {
@@ -77,8 +78,9 @@ void claudio::close_link () {
 
 
 void claudio::init_link () {
-  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_OpenDigitizer (CAEN_DGTZ_PCI_OpticalLink, 0, 0, 0, &handle_);
-  if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_OpenDigitizer(" << CAEN_DGTZ_PCI_OpticalLink << "," << 0 << "," << 0 << "," << 0 << "): " << caen_error (err);
+  CAEN_DGTZ_ConnectionType link_type = sibilla::get ()("usb-link") ? CAEN_DGTZ_USB : CAEN_DGTZ_PCI_OpticalLink;
+  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_OpenDigitizer (link_type, 0, 0, 0, &handle_);
+  if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_OpenDigitizer(" << link_type << "," << 0 << "," << 0 << "," << 0 << "): " << caen_error (err);
 
   err = CAEN_DGTZ_Reset (handle_);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_Reset(" << handle_ << "):" << caen_error (err);
@@ -112,11 +114,11 @@ void claudio::init_trigger () {
   err = CAEN_DGTZ_SetIOLevel (handle_, CAEN_DGTZ_IOLevel_TTL);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetIOLevel(" << handle_ << "," << CAEN_DGTZ_IOLevel_TTL << "): " << caen_error (err);
 
-  u_int32_t record_length = 10000;
+  u_int32_t record_length = sibilla::get ()["gate-width"].as<int>();
   err = CAEN_DGTZ_SetRecordLength (handle_, record_length);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetRecordLength(" << handle_ << "," << record_length << "): " << caen_error (err);
 
-  int post_trigger = 50;
+  int post_trigger = sibilla::get ()["post-trigger"].as<int>();
   err = CAEN_DGTZ_SetPostTriggerSize (handle_, post_trigger);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetPostTriggerSize(" << handle_ << "," << post_trigger << "): " << caen_error (err);
 
@@ -169,15 +171,11 @@ std::vector<claudio_ev*> claudio::loop() {
     err = CAEN_DGTZ_GetNumEvents (handle_, event_buffer_, gross_size, &n_events);
     if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_GetNumEvents(" << handle_ << "," << event_buffer_ << "," << gross_size << "," << n_events << "): " << caen_error (err);
 
-    std::cout << "Got buffer with size " << gross_size << " and n_events " << n_events << std::endl;
-
     for (uint32_t i = 0; i < n_events; i++) {
       CAEN_DGTZ_EventInfo_t event_info;
       char *event_ptr;
       err = CAEN_DGTZ_GetEventInfo (handle_, event_buffer_, gross_size, i, &event_info, &event_ptr);
       if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_GetEventInfo(" << handle_ << "," << event_buffer_ << "," << gross_size << "," << i << "," << event_info.EventCounter << "," << event_ptr << "): " << caen_error (err);
-
-      std::cout << "s " << event_info.EventSize << " c " << event_info.EventCounter << " t " << event_info.TriggerTimeTag << std::endl;
 
       CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_DecodeEvent (handle_, event_ptr, &decoded_event_);
       if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_DecodeEvent(" << handle_ << "," << event_ptr << ", NULL): " << caen_error (err); 
