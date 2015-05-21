@@ -1,8 +1,12 @@
 #include <iostream>
+#include <stdexcept>
 #include "claudio.hh"
 
 int main () {
   claudio c;
+  c.init ();
+  c.start ();
+
   for (int i = 0; i < 20; i++) {
     auto v = c.loop ();
     std::cout << "calling loop " << v.size () << std::endl;
@@ -13,4 +17,6 @@ int main () {
       v.erase (v.begin ());
     }
   }
+
+  c.stop ();
 }

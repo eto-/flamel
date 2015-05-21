@@ -14,8 +14,10 @@ class claudio {
     claudio ();
     ~claudio ();
 
+    void init ();
     void start ();
     void stop ();
+
     std::vector<claudio_ev*> loop ();
   private:
     int handle_;
