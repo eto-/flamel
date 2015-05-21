@@ -10,14 +10,12 @@ int main (int argc, char* argv[]) {
   c.init ();
   c.start ();
 
-  for (int i = 0; i < 20; i++) {
+  for (int n = sibilla::get ()["events"].as<int>(); n >= 0;) {
     auto v = c.loop ();
-    std::cout << "calling loop " << v.size () << std::endl;
-    while (v.size ()) {
-      claudio_ev *e = v.front ();
+    n -= v.size ();
+    for (int i = 0; i < v.size (); i++) {
+      std::unique_ptr<evaristo> e = std::move(v[i]);
       std::cout << e->time_tag << std::endl; 
-      delete [] e; 
-      v.erase (v.begin ());
     }
   }
 

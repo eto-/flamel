@@ -3,12 +3,9 @@
 
 #include <string>
 #include <vector>
+#include <memory>
+#include "evaristo.hh"
 
-struct claudio_ev {
-  u_int32_t size, time_tag;
-  u_int16_t samples[0];
-};
- 
 class claudio {
   public:
     claudio ();
@@ -18,7 +15,8 @@ class claudio {
     void start ();
     void stop ();
 
-    std::vector<claudio_ev*> loop ();
+    std::vector<std::unique_ptr<evaristo>> loop ();
+
   private:
     int handle_;
     char *event_buffer_;

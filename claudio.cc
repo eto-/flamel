@@ -151,8 +151,8 @@ void claudio::stop () {
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SWStopAcquisition(" << handle_ << "): " << caen_error (err);
 }
 
-std::vector<claudio_ev*> claudio::loop() {
-  std::vector<claudio_ev*> ev_v;
+std::vector<std::unique_ptr<evaristo>> claudio::loop() {
+  std::vector<std::unique_ptr<evaristo>> ev_v;
   CAEN_DGTZ_ErrorCode err;
 
   err = CAEN_DGTZ_SendSWtrigger (handle_);
@@ -182,12 +182,12 @@ std::vector<claudio_ev*> claudio::loop() {
 
       CAEN_DGTZ_UINT16_EVENT_t *decoded_event = reinterpret_cast<CAEN_DGTZ_UINT16_EVENT_t*>(decoded_event_);
 
-      claudio_ev *ev = reinterpret_cast<claudio_ev*>(new u_int16_t[4 + decoded_event->ChSize[1]]);
+      std::unique_ptr<evaristo> ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new u_int16_t[4 + decoded_event->ChSize[1]]));
       ev->time_tag = event_info.TriggerTimeTag;
       ev->size = 4 + decoded_event->ChSize[1];
       memcpy (ev->samples, decoded_event->DataChannel[1], decoded_event->ChSize[1] * 2);
       
-      ev_v.push_back (ev);
+      ev_v.push_back (std::move(ev));
     }
   }
   return ev_v;
