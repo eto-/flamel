@@ -1,12 +1,14 @@
 #include <iostream>
 #include <stdexcept>
-#include "claudio.hh"
 #include "sibilla.hh"
+#include "giotto.hh"
+#include "claudio.hh"
 
 int main (int argc, char* argv[]) {
   sibilla::get ().parse (argc, argv);
-
+  giotto g;
   claudio c;
+
   c.init ();
   c.start ();
 
@@ -15,7 +17,7 @@ int main (int argc, char* argv[]) {
     n -= v.size ();
     for (int i = 0; i < v.size (); i++) {
       std::unique_ptr<evaristo> e = std::move(v[i]);
-      std::cout << e->time_tag << std::endl; 
+      if (!(n % 10)) g.Draw (e.get ());
     }
   }
 

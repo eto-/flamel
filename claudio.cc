@@ -183,7 +183,7 @@ std::vector<std::unique_ptr<evaristo>> claudio::loop() {
       CAEN_DGTZ_UINT16_EVENT_t *decoded_event = reinterpret_cast<CAEN_DGTZ_UINT16_EVENT_t*>(decoded_event_);
 
       std::unique_ptr<evaristo> ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new u_int16_t[6 + decoded_event->ChSize[1]]));
-      ev->size = decoded_event->ChSize[1];
+      ev->n_samples = decoded_event->ChSize[1];
       ev->time_tag = event_info.TriggerTimeTag;
       ev->counter = event_info.EventCounter;
       memcpy (ev->samples, decoded_event->DataChannel[1], decoded_event->ChSize[1] * 2);
