@@ -3,7 +3,6 @@
 #include "giotto.hh"
 #include "evaristo.hh"
 
-
 giotto::giotto () {
   int arg = 0;
   app = std::unique_ptr<TApplication>(new TApplication("application",&arg,0)); 
@@ -24,7 +23,7 @@ void giotto::Draw (evaristo* ev) {
     graph = std::unique_ptr<TGraph>(new TGraph(ev->n_samples));
     std::iota (graph->GetX (), graph->GetX () + graph->GetN (), 0);
   }
-  std::copy (ev->samples, ev->samples + ev->n_samples, graph->GetX ());
+  std::copy (ev->samples, ev->samples + ev->n_samples, graph->GetY ());
   graph->Draw ("AL+");
 
   window->Update();
