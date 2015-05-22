@@ -1,5 +1,5 @@
 #include <TCanvas.h>
-#include <TH1D.h>
+#include <TGraph.h>
 #include <TApplication.h>
 #include <memory>
 
@@ -14,6 +14,6 @@ class giotto {
 
   private:
     std::unique_ptr<TCanvas> window;
-    std::unique_ptr<TH1D> histo;
+    std::unique_ptr<TGraph> graph;
     std::unique_ptr<TApplication> app;
 };
