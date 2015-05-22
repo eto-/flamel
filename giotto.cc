@@ -3,11 +3,17 @@
 #include "evaristo.hh"
 
 
-giotto::giotto() {
+giotto::giotto () {
   int arg = 0;
   app = std::unique_ptr<TApplication>(new TApplication("application",&arg,0)); 
   window = std::unique_ptr<TCanvas>(new TCanvas());
   histo = 0;
+}
+
+giotto::~giotto () {
+  histo = 0;
+  window = 0;
+  app = 0;
 }
 
 void giotto::Draw (evaristo* ev) {

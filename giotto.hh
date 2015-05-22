@@ -7,7 +7,8 @@ class evaristo;
 
 class giotto {
   public:
-    giotto();
+    giotto ();
+    ~giotto ();
 
     void Draw (evaristo* ev);
 
