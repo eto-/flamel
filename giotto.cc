@@ -16,7 +16,7 @@ giotto::~giotto () {
   app = 0;
 }
 
-void giotto::Draw (evaristo* ev) {
+void giotto::draw (evaristo* ev) {
   window->cd();
 
   if (!graph || graph->GetN () != ev->n_samples) {
