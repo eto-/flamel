@@ -98,7 +98,7 @@ std::string claudio::init () {
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_GetInfo (handle_, &BoardInfo);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_GetInfo(" << handle_ << "): " << caen_error (err);
 
-  std::cout << "found digitizer " << BoardInfo.SerialNumber << " model " << BoardInfo.ModelName << " ROC # " << BoardInfo.ROC_FirmwareRel << " AMC # " << BoardInfo.AMC_FirmwareRel;
+  std::cout << "found digitizer " << BoardInfo.SerialNumber << " model " << BoardInfo.ModelName << " ROC # " << BoardInfo.ROC_FirmwareRel << " AMC # " << BoardInfo.AMC_FirmwareRel << std::endl;
 
   std::ostringstream metadata;
   metadata << "board: 17" << v17xx_modules[(CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode))] << std::endl;
