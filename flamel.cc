@@ -9,7 +9,7 @@
 #include <string.h>
 #include <cmath>
 #include <stdlib.h>
-#include "claudio.hh"
+#include "flamel.hh"
 #include "attila.hh"
 #include "sibilla.hh"
 
@@ -70,12 +70,12 @@ namespace {
             { CAEN_DGTZ_XX761_FAMILY_CODE, 61 }};
 }
 
-claudio::claudio(): decoded_event_(0) { 
+flamel::flamel(): decoded_event_(0) { 
   emulate_hw_ = sibilla::evoke ()("emulate-hw");
 
 }
 
-claudio::~claudio() {
+flamel::~flamel() {
   if (emulate_hw_) return;
 
   CAEN_DGTZ_FreeEvent (handle_, &decoded_event_); 
@@ -83,7 +83,7 @@ claudio::~claudio() {
   close_link ();
 }
 
-std::string claudio::init () {
+std::string flamel::init () {
   if (emulate_hw_) return "";
 
   init_link ();
@@ -108,7 +108,7 @@ std::string claudio::init () {
   return metadata.str ();
 }
 
-void claudio::close_link () {
+void flamel::close_link () {
   CAEN_DGTZ_FreeReadoutBuffer (&event_buffer_);
 
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_CloseDigitizer (handle_);
@@ -116,7 +116,7 @@ void claudio::close_link () {
 }
 
 
-void claudio::init_link () {
+void flamel::init_link () {
   CAEN_DGTZ_ConnectionType link_type = sibilla::evoke ()("usb-link") ? CAEN_DGTZ_USB : CAEN_DGTZ_PCI_OpticalLink;
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_OpenDigitizer (link_type, 0, 0, 0, &handle_);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_OpenDigitizer(" << link_type << "," << 0 << "," << 0 << "," << 0 << "): " << caen_error (err);
@@ -126,7 +126,7 @@ void claudio::init_link () {
   usleep (100000);
 }
 
-void claudio::init_channels () {
+void flamel::init_channels () {
   if (sibilla::evoke ()("des-mode")) {
     CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetDESMode (handle_, CAEN_DGTZ_DISABLE);
     if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetDESMode(" << handle_ << ",true): " << caen_error (err);
@@ -147,7 +147,7 @@ void claudio::init_channels () {
 }
 
 
-void claudio::init_trigger () {
+void flamel::init_trigger () {
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetExtTriggerInputMode (handle_, CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetExtTriggerInputMode(" << handle_ << ",CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT): " << caen_error (err);
 
@@ -169,7 +169,7 @@ void claudio::init_trigger () {
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetAcquisitionMode(" << handle_ << "," << CAEN_DGTZ_SW_CONTROLLED << "): " << caen_error (err);
 }
 
-void claudio::init_buffers () {
+void flamel::init_buffers () {
   //if (int(get_register(0x800C)) > max_buffers_code) set_register (0x800C, max_buffers_code);
 
   int max_events_blt = 20;
@@ -183,7 +183,7 @@ void claudio::init_buffers () {
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_MallocReadoutBuffer(" << handle_ << "): " << caen_error (err);
 }
 
-void claudio::start () {
+void flamel::start () {
   if (emulate_hw_) return;
 
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SWStartAcquisition (handle_);
@@ -191,14 +191,14 @@ void claudio::start () {
   usleep (10000);
 }
 
-void claudio::stop () {
+void flamel::stop () {
   if (emulate_hw_) return;
 
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SWStopAcquisition (handle_);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SWStopAcquisition(" << handle_ << "): " << caen_error (err);
 }
 
-std::vector<std::unique_ptr<evaristo>> claudio::loop() {
+std::vector<std::unique_ptr<evaristo>> flamel::loop() {
   if (emulate_hw_) return emulate_loop ();
 
   std::vector<std::unique_ptr<evaristo>> ev_v;
@@ -243,12 +243,12 @@ std::vector<std::unique_ptr<evaristo>> claudio::loop() {
   return ev_v;
 }
 
-void claudio::set_register (uint16_t reg, uint32_t val) {
+void flamel::set_register (uint16_t reg, uint32_t val) {
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_WriteRegister (handle_, reg, val);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_WriteRegister(" << handle_ << "," << std::hex << std::showbase << reg << "," << val << "): " << caen_error (err);
 }
 
-uint32_t claudio::get_register (uint16_t reg) {
+uint32_t flamel::get_register (uint16_t reg) {
   uint32_t val;
 
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_ReadRegister (handle_, reg, &val);
@@ -257,7 +257,7 @@ uint32_t claudio::get_register (uint16_t reg) {
   return val;
 }
 
-uint32_t claudio::set_register_bits (uint16_t reg, uint32_t bits) {
+uint32_t flamel::set_register_bits (uint16_t reg, uint32_t bits) {
   uint32_t val = get_register (reg);
 
   if (bits) {
@@ -268,7 +268,7 @@ uint32_t claudio::set_register_bits (uint16_t reg, uint32_t bits) {
   return val;
 }
 
-bool claudio::wait_irq () {
+bool flamel::wait_irq () {
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_IRQWait (handle_, 100);
   if (err == CAEN_DGTZ_Timeout) return false;
   else if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_IRQWait(" << handle_ << "," << 100 << "): " << caen_error (err);
@@ -276,7 +276,7 @@ bool claudio::wait_irq () {
   return true;
 }
 
-std::vector<std::unique_ptr<evaristo>> claudio::emulate_loop () {
+std::vector<std::unique_ptr<evaristo>> flamel::emulate_loop () {
   std::vector<std::unique_ptr<evaristo>> ev_v;
 
   int n = sibilla::evoke ()["gate-width"].as<int>();

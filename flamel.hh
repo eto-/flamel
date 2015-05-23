@@ -1,15 +1,15 @@
-#ifndef claudio_hh
-#define claudio_hh
+#ifndef FLAMEL_HH
+#define FLAMEL_HH
 
 #include <string>
 #include <vector>
 #include <memory>
 #include "evaristo.hh"
 
-class claudio {
+class flamel {
   public:
-    claudio ();
-    ~claudio ();
+    flamel ();
+    ~flamel ();
 
     std::string init ();
     void start ();
