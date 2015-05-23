@@ -18,6 +18,7 @@ class claudio {
     std::vector<std::unique_ptr<evaristo>> loop ();
 
   private:
+    bool emulate_hw_;
     int handle_;
     char *event_buffer_;
     uint32_t buffer_size_;
@@ -29,6 +30,8 @@ class claudio {
     void init_trigger ();
     void init_buffers ();
     void close_link ();
+
+    std::vector<std::unique_ptr<evaristo>> emulate_loop ();
 
     uint32_t get_register (uint16_t reg); 
     void set_register (uint16_t reg, uint32_t value);

@@ -7,6 +7,8 @@
 #include <sstream>
 #include <iostream>
 #include <string.h>
+#include <cmath>
+#include <stdlib.h>
 #include "claudio.hh"
 #include "attila.hh"
 #include "sibilla.hh"
@@ -49,15 +51,22 @@ namespace {
   }
 }
 
-claudio::claudio(): decoded_event_(0) { }
+claudio::claudio(): decoded_event_(0) { 
+  emulate_hw_ = sibilla::get ()("emulate-hw");
+
+}
 
 claudio::~claudio() {
+  if (emulate_hw_) return;
+
   CAEN_DGTZ_FreeEvent (handle_, &decoded_event_); 
 
   close_link ();
 }
 
 void claudio::init () {
+  if (emulate_hw_) return;
+
   init_link ();
 
   init_channels ();
@@ -141,17 +150,23 @@ void claudio::init_buffers () {
 }
 
 void claudio::start () {
+  if (emulate_hw_) return;
+
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SWStartAcquisition (handle_);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SWStartAcquisition(" << handle_ << "): " << caen_error (err);
   usleep (10000);
 }
 
 void claudio::stop () {
+  if (emulate_hw_) return;
+
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SWStopAcquisition (handle_);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SWStopAcquisition(" << handle_ << "): " << caen_error (err);
 }
 
 std::vector<std::unique_ptr<evaristo>> claudio::loop() {
+  if (emulate_hw_) return emulate_loop ();
+
   std::vector<std::unique_ptr<evaristo>> ev_v;
   CAEN_DGTZ_ErrorCode err;
 
@@ -227,3 +242,21 @@ bool claudio::wait_irq () {
   return true;
 }
 
+std::vector<std::unique_ptr<evaristo>> claudio::emulate_loop () {
+  std::vector<std::unique_ptr<evaristo>> ev_v;
+
+  int n = sibilla::get ()["gate-width"].as<int>();
+
+  std::unique_ptr<evaristo> ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new u_int16_t[6 + n]));
+  ev->n_samples = n;
+  ev->time_tag = 0;
+  ev->counter = 0;
+
+  int f = rand ();
+  for (int i = 0; i < n; i++) ev->samples[i] = 512 + 400 * sin (2 * 3.14 * i / 500 + f);
+
+  ev_v.push_back (std::move(ev));
+  
+  usleep (10000);
+  return ev_v;
+}
