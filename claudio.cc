@@ -71,7 +71,7 @@ namespace {
 }
 
 claudio::claudio(): decoded_event_(0) { 
-  emulate_hw_ = sibilla::get ()("emulate-hw");
+  emulate_hw_ = sibilla::evoke ()("emulate-hw");
 
 }
 
@@ -103,7 +103,7 @@ std::string claudio::init () {
   std::ostringstream metadata;
   metadata << "board: 17" << v17xx_modules[(CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode))] << std::endl;
   metadata << "sample_rate: " << sample_rates_MHz[CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode)] << std::endl;
-  metadata << "des_mode: " << sibilla::get ()("des-mode") << std::endl;
+  metadata << "des_mode: " << sibilla::evoke ()("des-mode") << std::endl;
   metadata << "bits: " << BoardInfo.ADC_NBits << std::endl;
   return metadata.str ();
 }
@@ -117,7 +117,7 @@ void claudio::close_link () {
 
 
 void claudio::init_link () {
-  CAEN_DGTZ_ConnectionType link_type = sibilla::get ()("usb-link") ? CAEN_DGTZ_USB : CAEN_DGTZ_PCI_OpticalLink;
+  CAEN_DGTZ_ConnectionType link_type = sibilla::evoke ()("usb-link") ? CAEN_DGTZ_USB : CAEN_DGTZ_PCI_OpticalLink;
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_OpenDigitizer (link_type, 0, 0, 0, &handle_);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_OpenDigitizer(" << link_type << "," << 0 << "," << 0 << "," << 0 << "): " << caen_error (err);
 
@@ -127,13 +127,13 @@ void claudio::init_link () {
 }
 
 void claudio::init_channels () {
-  if (sibilla::get ()("des-mode")) {
+  if (sibilla::evoke ()("des-mode")) {
     CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetDESMode (handle_, CAEN_DGTZ_DISABLE);
     if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetDESMode(" << handle_ << ",true): " << caen_error (err);
   }
 
-  int ch = sibilla::get ()["channel_id"].as<int>();
-  int dc_offset = sibilla::get ()["dc_offset"].as<int>();
+  int ch = sibilla::evoke ()["channel_id"].as<int>();
+  int dc_offset = sibilla::evoke ()["dc_offset"].as<int>();
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetChannelDCOffset (handle_, ch, dc_offset);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetChannelDCOffset(" << handle_ << "," << 0 << "," << dc_offset << "): " << caen_error (err);
 
@@ -157,11 +157,11 @@ void claudio::init_trigger () {
   err = CAEN_DGTZ_SetIOLevel (handle_, CAEN_DGTZ_IOLevel_TTL);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetIOLevel(" << handle_ << "," << CAEN_DGTZ_IOLevel_TTL << "): " << caen_error (err);
 
-  u_int32_t record_length = sibilla::get ()["gate-width"].as<int>();
+  u_int32_t record_length = sibilla::evoke ()["gate-width"].as<int>();
   err = CAEN_DGTZ_SetRecordLength (handle_, record_length);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetRecordLength(" << handle_ << "," << record_length << "): " << caen_error (err);
 
-  int post_trigger = sibilla::get ()["post-trigger"].as<int>();
+  int post_trigger = sibilla::evoke ()["post-trigger"].as<int>();
   err = CAEN_DGTZ_SetPostTriggerSize (handle_, post_trigger);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetPostTriggerSize(" << handle_ << "," << post_trigger << "): " << caen_error (err);
 
@@ -279,7 +279,7 @@ bool claudio::wait_irq () {
 std::vector<std::unique_ptr<evaristo>> claudio::emulate_loop () {
   std::vector<std::unique_ptr<evaristo>> ev_v;
 
-  int n = sibilla::get ()["gate-width"].as<int>();
+  int n = sibilla::evoke ()["gate-width"].as<int>();
 
   std::unique_ptr<evaristo> ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new u_int16_t[6 + n]));
   ev->n_samples = n;

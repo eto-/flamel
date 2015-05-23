@@ -6,7 +6,7 @@
 #include "omero.hh"
 
 int main (int argc, char* argv[]) {
-  sibilla::get ().parse (argc, argv);
+  sibilla::evoke ().parse (argc, argv);
 
   giotto g;
   claudio c;
@@ -17,7 +17,7 @@ int main (int argc, char* argv[]) {
 
   c.start ();
 
-  for (int n = sibilla::get ()["events"].as<int>(); n > 0;) {
+  for (int n = sibilla::evoke ()["events"].as<int>(); n > 0;) {
     auto v = c.loop ();
     n -= v.size ();
     for (int i = 0; i < v.size (); i++) {

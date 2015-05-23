@@ -7,7 +7,7 @@ namespace po = boost::program_options;
 
 class sibilla: public po::variables_map {
   public:
-    static sibilla& get ();
+    static sibilla& evoke ();
 
     void parse (int argc, char *argv[]);
     bool operator() (const std::string& opt) { return count(opt); }

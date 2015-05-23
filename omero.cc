@@ -7,20 +7,20 @@
 
 omero::omero () {
   o_ = 0;
-  if (sibilla::get ()("pretend")) return;
+  if (sibilla::evoke ()("pretend")) return;
 
-  filename_ = sibilla::get ()["filename"].as<std::string>();
+  filename_ = sibilla::evoke ()["filename"].as<std::string>();
 
-  if (sibilla::get ()("zip")) {
+  if (sibilla::evoke ()("zip")) {
     if (filename_.size () < 3 || filename_.substr(filename_.size () - 3) != ".gz") filename_ = filename_ + ".gz";
 
     o_ = std::unique_ptr<std::ostream> (new redi::opstream ("gzip - > " + filename_));
   } else o_ = std::unique_ptr<std::ostream> (new std::ofstream (filename_));
 
-  *o_ << "run: " << sibilla::get ()["run"].as<int>() << std::endl;
+  *o_ << "run: " << sibilla::evoke ()["run"].as<int>() << std::endl;
   time_t t = time (NULL);
   *o_ << "date: " << ctime (&t);
-  if (sibilla::get ()("comment")) *o_ << "comment: " << sibilla::get ()["comment"].as<std::string>() << std::endl;
+  if (sibilla::evoke ()("comment")) *o_ << "comment: " << sibilla::evoke ()["comment"].as<std::string>() << std::endl;
 }
 
 void omero::metadata (const std::string& m) {

@@ -3,7 +3,7 @@
 
 std::unique_ptr<sibilla> sibilla::me_(nullptr);
 
-sibilla& sibilla::get () {
+sibilla& sibilla::evoke () {
   if (!me_) me_ = std::unique_ptr<sibilla>(new sibilla);
 
   return *me_;
