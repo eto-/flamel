@@ -9,7 +9,6 @@ class evaristo;
 class omero {
   public:
     omero ();
-    ~omero ();
 
     void write (evaristo* ev);
 
