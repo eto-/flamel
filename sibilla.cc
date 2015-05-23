@@ -17,6 +17,7 @@ sibilla::sibilla (): desc_("claudio options") {
     ("emulate-hw,E", "emulate the digitizer")
     ("pretend,P", "skip file saving")
     ("zip,z", "zip output file")
+    ("comment,c", po::value<std::string>(), "comment")
     ("run,r", po::value<int>()->required(), "run number")
     ("events,e", po::value<int>()->required(), "events to acquire")
     ("gate-width,g", po::value<int>()->required(), "gate width in samples")
