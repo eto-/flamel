@@ -10,7 +10,8 @@ class omero {
   public:
     omero ();
 
-    void write (evaristo* ev);
+    void metadata (const std::string&);
+    void write (evaristo*);
 
   private:
     std::string filename_;
