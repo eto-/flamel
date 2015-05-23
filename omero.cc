@@ -24,11 +24,15 @@ omero::omero () {
 }
 
 void omero::metadata (const std::string& m) {
+  if (!m.size ()) return;
+
   *o_ << m;
   if (m[m.size () - 1] != '\n') *o_ << std::endl;
 }
 
 void omero::write (evaristo* ev) {
+  if (!ev) return;
+
   *o_ << *ev;
 }
 

@@ -49,6 +49,25 @@ namespace {
     if (it == errors.end ()) return "CAEN_Unknown_error";
     return it->second + "\n";
   }
+  static std::map<CAEN_DGTZ_BoardFamilyCode_t, int> sample_rates_MHz{{ CAEN_DGTZ_XX724_FAMILY_CODE, 100 },
+            { CAEN_DGTZ_XX721_FAMILY_CODE, 500 },
+            { CAEN_DGTZ_XX731_FAMILY_CODE, 500 },
+            { CAEN_DGTZ_XX720_FAMILY_CODE, 250 },
+            { CAEN_DGTZ_XX740_FAMILY_CODE, 65 },
+            { CAEN_DGTZ_XX751_FAMILY_CODE, 1000 },
+            { CAEN_DGTZ_XX742_FAMILY_CODE, 5000 },
+            { CAEN_DGTZ_XX780_FAMILY_CODE, 100 },
+            { CAEN_DGTZ_XX761_FAMILY_CODE, 4000 }};
+
+  static std::map<CAEN_DGTZ_BoardFamilyCode_t, int> v17xx_modules{{ CAEN_DGTZ_XX724_FAMILY_CODE, 24 },
+            { CAEN_DGTZ_XX721_FAMILY_CODE, 21 },
+            { CAEN_DGTZ_XX731_FAMILY_CODE, 31 },
+            { CAEN_DGTZ_XX720_FAMILY_CODE, 20 },
+            { CAEN_DGTZ_XX740_FAMILY_CODE, 40 },
+            { CAEN_DGTZ_XX751_FAMILY_CODE, 51 },
+            { CAEN_DGTZ_XX742_FAMILY_CODE, 42 },
+            { CAEN_DGTZ_XX780_FAMILY_CODE, 80 },
+            { CAEN_DGTZ_XX761_FAMILY_CODE, 61 }};
 }
 
 claudio::claudio(): decoded_event_(0) { 
@@ -64,8 +83,8 @@ claudio::~claudio() {
   close_link ();
 }
 
-void claudio::init () {
-  if (emulate_hw_) return;
+std::string claudio::init () {
+  if (emulate_hw_) return "";
 
   init_link ();
 
@@ -75,7 +94,18 @@ void claudio::init () {
 
   init_buffers ();
 
-  start ();
+  CAEN_DGTZ_BoardInfo_t BoardInfo;
+  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_GetInfo (handle_, &BoardInfo);
+  if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_GetInfo(" << handle_ << "): " << caen_error (err);
+
+  std::cout << "found digitizer " << BoardInfo.SerialNumber << " model " << BoardInfo.ModelName << " ROC # " << BoardInfo.ROC_FirmwareRel << " AMC # " << BoardInfo.AMC_FirmwareRel;
+
+  std::ostringstream metadata;
+  metadata << "board: 17" << v17xx_modules[(CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode))] << std::endl;
+  metadata << "sample_rate: " << sample_rates_MHz[CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode)] << std::endl;
+  metadata << "des_mode: " << sibilla::get ()("des-mode") << std::endl;
+  metadata << "bits: " << BoardInfo.ADC_NBits << std::endl;
+  return metadata.str ();
 }
 
 void claudio::close_link () {
@@ -97,16 +127,23 @@ void claudio::init_link () {
 }
 
 void claudio::init_channels () {
-  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetDESMode (handle_, CAEN_DGTZ_DISABLE);
-  if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetDESMode(" << handle_ << ",true): " << caen_error (err);
+  if (sibilla::get ()("des-mode")) {
+    CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetDESMode (handle_, CAEN_DGTZ_DISABLE);
+    if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetDESMode(" << handle_ << ",true): " << caen_error (err);
+  }
 
-  int dc_offset = 0x2700;
-  err = CAEN_DGTZ_SetChannelDCOffset (handle_, 1, dc_offset);
+  int ch = sibilla::get ()["channel_id"].as<int>();
+  int dc_offset = sibilla::get ()["dc_offset"].as<int>();
+  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetChannelDCOffset (handle_, ch, dc_offset);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetChannelDCOffset(" << handle_ << "," << 0 << "," << dc_offset << "): " << caen_error (err);
 
-  u_int8_t channels_mask = 2;
+  u_int8_t channels_mask = 1 << ch;
   err = CAEN_DGTZ_SetChannelEnableMask (handle_, channels_mask);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetChannelEnableMask(" << handle_ << "," << channels_mask << "): " << caen_error (err);
+
+  err = CAEN_DGTZ_SetChannelSelfTrigger (handle_, CAEN_DGTZ_TRGMODE_DISABLED, channels_mask);
+  if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetChannelSelfTrigger(" << handle_ << ",CAEN_DGTZ_TRGMODE_DISABLED,0xff): " << caen_error (err);
+
 }
 
 
@@ -116,9 +153,6 @@ void claudio::init_trigger () {
 
   err = CAEN_DGTZ_SetSWTriggerMode(handle_, CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetSWTriggerMode(" << handle_ << ",CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT): " << caen_error (err);
-
-  err = CAEN_DGTZ_SetChannelSelfTrigger (handle_, CAEN_DGTZ_TRGMODE_DISABLED, 0x2);
-  if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetChannelSelfTrigger(" << handle_ << ",CAEN_DGTZ_TRGMODE_DISABLED,0xff): " << caen_error (err);
 
   err = CAEN_DGTZ_SetIOLevel (handle_, CAEN_DGTZ_IOLevel_TTL);
   if (err != CAEN_DGTZ_Success) attila(__FILE__) << " CAEN_DGTZ_SetIOLevel(" << handle_ << "," << CAEN_DGTZ_IOLevel_TTL << "): " << caen_error (err);

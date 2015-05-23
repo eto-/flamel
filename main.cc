@@ -12,15 +12,17 @@ int main (int argc, char* argv[]) {
   claudio c;
   omero o;
 
-  c.init ();
+  std::string metadata = c.init ();
+  o.metadata (metadata);
+
   c.start ();
 
-  for (int n = sibilla::get ()["events"].as<int>(); n >= 0;) {
+  for (int n = sibilla::get ()["events"].as<int>(); n > 0;) {
     auto v = c.loop ();
     n -= v.size ();
     for (int i = 0; i < v.size (); i++) {
       std::unique_ptr<evaristo> e = std::move(v[i]);
-      if (!(n % 10)) g.draw (e.get ());
+      if (!(n % 5)) g.draw (e.get ());
       o.write (e.get ());
     }
   }

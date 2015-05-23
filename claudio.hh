@@ -11,7 +11,7 @@ class claudio {
     claudio ();
     ~claudio ();
 
-    void init ();
+    std::string init ();
     void start ();
     void stop ();
 

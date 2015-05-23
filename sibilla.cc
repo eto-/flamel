@@ -15,14 +15,17 @@ sibilla::sibilla (): desc_("claudio options") {
     ("usb-link,u", "usb link type")
     ("link-number,l", po::value<int>()->default_value(0), "link number")
     ("emulate-hw,E", "emulate the digitizer")
-    ("pretend,P", "skip file saving")
+    ("gate-width,g", po::value<int>()->required(), "gate width in samples")
+    ("post-trigger,p", po::value<int>()->default_value(0), "post trigger window (0-100)")
+    ("des-mode,d", "des mode")
+    ("dc_offset,D", po::value<int>()->default_value(0x2700), "channel dc offset") 
+    ("channel_id,C", po::value<int>()->default_value(1), "channel id (only odd if des-mode is enabled)")
+    ("filename,f", po::value<std::string>()->required(), "the output file name")
     ("zip,z", "zip output file")
+    ("pretend,P", "skip file saving")
     ("comment,c", po::value<std::string>(), "comment")
     ("run,r", po::value<int>()->required(), "run number")
     ("events,e", po::value<int>()->required(), "events to acquire")
-    ("gate-width,g", po::value<int>()->required(), "gate width in samples")
-    ("post-trigger,p", po::value<int>()->default_value(0), "post trigger window (0-100)")
-    ("filename,f", po::value<std::string>()->required(), "the output file name")
     ;
 }
 
