@@ -14,12 +14,14 @@ sibilla::sibilla (): desc_("claudio options") {
     ("help,h", "produce help message")
     ("usb-link,u", "usb link type")
     ("link-number,l", po::value<int>()->default_value(0), "link number")
+    ("emulate-hw,E", "emulate the digitizer")
     ("pretend,P", "skip file saving")
     ("zip,z", "zip output file")
     ("run,r", po::value<int>()->required(), "run number")
     ("events,e", po::value<int>()->required(), "events to acquire")
     ("gate-width,g", po::value<int>()->required(), "gate width in samples")
     ("post-trigger,p", po::value<int>()->default_value(0), "post trigger window (0-100)")
+    ("filename,f", po::value<std::string>()->required(), "the output file name")
     ;
 }
 
