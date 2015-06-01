@@ -4,12 +4,17 @@
 
 class attila {
   public:
-    attila(const std::string& file, bool fail=true);
+    attila(const std::string& file, int line = 0, bool fail=true);
+#define ATTILA attila(__FILE__, __LINE__)
+
     ~attila ();
     
     void exception ();
 
-    template <class T> attila& operator<<(const T &x) { s_ << x; return *this; }
+    template <typename T> attila& operator<<(const T &x) { s_ << x; return *this; }
+
+    typedef std::basic_ostream<char, std::char_traits<char>>& (*manip)(std::basic_ostream<char, std::char_traits<char>>&);
+    attila& operator<<(manip f) { f(s_); return *this; }
   private:
     std::ostringstream s_;
     bool fail_;

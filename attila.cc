@@ -2,8 +2,10 @@
 #include <stdexcept>
 #include "attila.hh"
 
-attila::attila (const std::string& file, bool fail): fail_(fail) {
-  if (file.size ()) s_ << file << ": ";
+attila::attila (const std::string& file, int line, bool fail): fail_(fail) {
+  if (file.size ()) s_ << file;
+  if (line > 0) s_ << ":" << line;
+  s_ << " ";
 }
 
 attila::~attila () {
