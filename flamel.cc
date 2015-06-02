@@ -84,7 +84,7 @@ flamel::~flamel() {
 }
 
 std::string flamel::init () {
-  if (emulate_hw_) return "";
+  if (emulate_hw_) return "emulated HW";
 
   init_link ();
 
@@ -102,7 +102,7 @@ std::string flamel::init () {
 
   std::ostringstream metadata;
   metadata << "board: 17" << v17xx_modules[(CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode))] << std::endl;
-  metadata << "sample_rate: " << sample_rates_MHz[CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode)] << std::endl;
+  metadata << "sample_rate: " << sample_rates_MHz[CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode)] * (1 + 1 * sibilla::evoke ()("des-mode")) << std::endl;
   metadata << "des_mode: " << sibilla::evoke ()("des-mode") << std::endl;
   metadata << "bits: " << BoardInfo.ADC_NBits << std::endl;
   return metadata.str ();
@@ -278,13 +278,14 @@ bool flamel::wait_irq () {
 
 std::vector<std::unique_ptr<evaristo>> flamel::emulate_loop () {
   std::vector<std::unique_ptr<evaristo>> ev_v;
+  static int c = 0;
 
   int n = sibilla::evoke ()["gate-width"].as<int>();
 
   std::unique_ptr<evaristo> ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new u_int16_t[6 + n]));
   ev->n_samples = n;
-  ev->time_tag = 0;
-  ev->counter = 0;
+  ev->time_tag = ++c * 100;
+  ev->counter = c;
 
   int f = rand ();
   for (int i = 0; i < n; i++) ev->samples[i] = 512 + 400 * sin (2 * 3.14 * i / 500 + f);
