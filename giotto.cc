@@ -2,12 +2,14 @@
 #include <TSystem.h>
 #include "giotto.hh"
 #include "evaristo.hh"
+#include "sibilla.hh"
 
 giotto::giotto () {
+  if (sibilla::evoke ()("quiet")) { window = 0; return; }
+
   int arg = 0;
   app = std::unique_ptr<TApplication>(new TApplication("application",&arg,0)); 
   window = std::unique_ptr<TCanvas>(new TCanvas());
-  graph = 0;
 }
 
 giotto::~giotto () {
@@ -17,6 +19,8 @@ giotto::~giotto () {
 }
 
 void giotto::draw (evaristo* ev) {
+  if (!window) return;
+
   window->cd();
 
   if (!graph || graph->GetN () != ev->n_samples) {
