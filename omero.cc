@@ -54,9 +54,13 @@ void omero::write (evaristo* ev) {
 
   if (o_txt_) *o_txt_ << *ev;
   if (o_wav_) {
-    short marker = 0xFFFF;
+    const short marker = 0xFFFF;
+    const short header_lenght = sizeof(evaristo) / 2;
+
     o_wav_->write (&marker, 1);
-    o_wav_->write ((short *)ev, sizeof(evaristo) / 2 + ev->n_samples);
+    o_wav_->write (&header_lenght, 1);
+
+    o_wav_->write ((short *)ev, header_lenght + ev->n_samples);
   }
 }
 
