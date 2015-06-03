@@ -8,5 +8,14 @@ struct evaristo {
 };
 
 std::ostream & operator << (std::ostream&, const evaristo&);
+
+struct metadata {
+  int board;
+  int n_bits;
+  int sampling_rate;
+};
+
+std::ostream & operator << (std::ostream&, const metadata&);
+
  
 #endif

@@ -13,3 +13,10 @@ std::ostream & operator << (std::ostream &o, const evaristo &e) {
   return o;
 }
 
+std::ostream & operator << (std::ostream& o, const metadata& m) {
+  o << "board: " << m.board << std::endl;
+  o << "n_bits: " << m.n_bits << std::endl;
+  o << "sampling_rate: " << m.sampling_rate << std::endl;
+}
+
+

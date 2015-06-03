@@ -11,11 +11,13 @@ class flamel {
     flamel ();
     ~flamel ();
 
-    std::string init ();
+    void init ();
     void start ();
     void stop ();
 
     std::vector<std::unique_ptr<evaristo>> loop ();
+
+    const metadata& info () const { return metadata_; }
 
   private:
     bool emulate_hw_;
@@ -23,12 +25,14 @@ class flamel {
     char *event_buffer_;
     uint32_t buffer_size_;
     void *decoded_event_;
+    metadata metadata_;
 
 
     void init_link ();
     void init_channels ();
     void init_trigger ();
     void init_buffers ();
+    void init_metadata ();
     void close_link ();
 
     std::vector<std::unique_ptr<evaristo>> emulate_loop ();

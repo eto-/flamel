@@ -10,10 +10,9 @@ int main (int argc, char* argv[]) {
 
   giotto g;
   flamel f;
-  omero o;
+  f.init ();
 
-  std::string metadata = f.init ();
-  o.metadata (metadata);
+  omero o(f.info ());
 
   f.start ();
 

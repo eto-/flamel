@@ -6,7 +6,7 @@
 #include "sibilla.hh"
 #include "evaristo.hh"
 
-omero::omero () {
+omero::omero (const metadata& m) {
   o_txt_ = 0;
   o_wav_ = 0;
 
@@ -36,23 +36,17 @@ omero::omero () {
     *o_txt_ << "run: " << sibilla::evoke ()["run"].as<int>() << std::endl;
     *o_txt_ << "date: " << date << std::endl;;
     if (sibilla::evoke ()("comment")) *o_txt_ << "comment: " << sibilla::evoke ()["comment"].as<std::string>() << std::endl;
+    *o_txt_ << m;
   } else {
     if (zip) ATTILA << "compressed wav files not supported";
-    else o_wav_ = std::unique_ptr<SndfileHandle> (new SndfileHandle(filename_, SFM_WRITE, SF_FORMAT_WAV | SF_FORMAT_PCM_16, 1, 44000));
+    else o_wav_ = std::unique_ptr<SndfileHandle> (new SndfileHandle(filename_, SFM_WRITE, SF_FORMAT_WAV | SF_FORMAT_PCM_16, 1, m.sampling_rate));
     o_wav_->setString (SF_STR_TITLE, std::to_string(sibilla::evoke ()["run"].as<int>()).c_str ());
     o_wav_->setString (SF_STR_DATE, date.c_str ());
     if (sibilla::evoke ()("comment")) o_wav_->setString (SF_STR_COMMENT, sibilla::evoke ()["comment"].as<std::string>().c_str ());
+    std::ostringstream t;
+    t << m.board << " (bits = " << m.n_bits << ")";
+    o_wav_->setString (SF_STR_ARTIST, t.str ().c_str ());
   }
-}
-
-void omero::metadata (const std::string& m) {
-  if (!m.size ()) return;
-
-  if (o_txt_) {
-    *o_txt_ << m;
-    if (m[m.size () - 1] != '\n') *o_txt_ << std::endl;
-  }
-  if (o_wav_) o_wav_->setString (SF_STR_ARTIST, m.c_str ());
 }
 
 void omero::write (evaristo* ev) {
@@ -63,7 +57,6 @@ void omero::write (evaristo* ev) {
     short marker = 0xFFFF;
     o_wav_->write (&marker, 1);
     o_wav_->write ((short *)ev, sizeof(evaristo) / 2 + ev->n_samples);
-    std::cout << "writing " << sizeof(evaristo) / 2 + ev->n_samples << std::endl;
   }
 }
 

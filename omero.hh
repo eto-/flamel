@@ -7,12 +7,12 @@
 
 
 class evaristo;
+class metadata;
 
 class omero {
   public:
-    omero ();
+    omero (const metadata&);
 
-    void metadata (const std::string&);
     void write (evaristo*);
 
   private:

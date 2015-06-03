@@ -72,7 +72,6 @@ namespace {
 
 flamel::flamel(): decoded_event_(0) { 
   emulate_hw_ = sibilla::evoke ()("emulate-hw");
-
 }
 
 flamel::~flamel() {
@@ -83,8 +82,13 @@ flamel::~flamel() {
   close_link ();
 }
 
-std::string flamel::init () {
-  if (emulate_hw_) return "emulated HW";
+void flamel::init () {
+  if (emulate_hw_) {
+    metadata_.board = -1751;
+    metadata_.n_bits = 10;
+    metadata_.sampling_rate = 1000000000;
+    return;
+  }
 
   init_link ();
 
@@ -94,18 +98,7 @@ std::string flamel::init () {
 
   init_buffers ();
 
-  CAEN_DGTZ_BoardInfo_t BoardInfo;
-  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_GetInfo (handle_, &BoardInfo);
-  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_GetInfo(" << handle_ << "): " << caen_error (err);
-
-  std::cout << "found digitizer " << BoardInfo.SerialNumber << " model " << BoardInfo.ModelName << " ROC # " << BoardInfo.ROC_FirmwareRel << " AMC # " << BoardInfo.AMC_FirmwareRel << std::endl;
-
-  std::ostringstream metadata;
-  metadata << "board: 17" << v17xx_modules[(CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode))] << std::endl;
-  metadata << "sample_rate: " << sample_rates_MHz[CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode)] * (1 + 1 * sibilla::evoke ()("des-mode")) << std::endl;
-  metadata << "des_mode: " << sibilla::evoke ()("des-mode") << std::endl;
-  metadata << "bits: " << BoardInfo.ADC_NBits << std::endl;
-  return metadata.str ();
+  init_metadata ();
 }
 
 void flamel::close_link () {
@@ -143,9 +136,7 @@ void flamel::init_channels () {
 
   err = CAEN_DGTZ_SetChannelSelfTrigger (handle_, CAEN_DGTZ_TRGMODE_DISABLED, channels_mask);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelSelfTrigger(" << handle_ << ",CAEN_DGTZ_TRGMODE_DISABLED,0xff): " << caen_error (err);
-
 }
-
 
 void flamel::init_trigger () {
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetExtTriggerInputMode (handle_, CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT);
@@ -181,6 +172,18 @@ void flamel::init_buffers () {
 
   err = CAEN_DGTZ_MallocReadoutBuffer (handle_, &event_buffer_, &buffer_size_);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_MallocReadoutBuffer(" << handle_ << "): " << caen_error (err);
+}
+
+void flamel::init_metadata () {
+  CAEN_DGTZ_BoardInfo_t BoardInfo;
+  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_GetInfo (handle_, &BoardInfo);
+  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_GetInfo(" << handle_ << "): " << caen_error (err);
+
+  std::cout << "found digitizer " << BoardInfo.SerialNumber << " model " << BoardInfo.ModelName << " ROC # " << BoardInfo.ROC_FirmwareRel << " AMC # " << BoardInfo.AMC_FirmwareRel << std::endl;
+
+  metadata_.board = 1700 + v17xx_modules[(CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode))];
+  metadata_.n_bits = BoardInfo.ADC_NBits;
+  metadata_.sampling_rate = sample_rates_MHz[CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode)] * (1 + 1 * sibilla::evoke ()("des-mode"));
 }
 
 void flamel::start () {
