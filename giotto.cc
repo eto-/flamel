@@ -1,8 +1,10 @@
 #include <algorithm>
+#include <TAxis.h>
 #include <TSystem.h>
 #include "giotto.hh"
 #include "evaristo.hh"
 #include "sibilla.hh"
+#include <iostream>
 
 giotto::giotto () {
   if (sibilla::evoke ()("quiet")) { window = 0; return; }
@@ -28,6 +30,7 @@ void giotto::draw (evaristo* ev) {
     std::iota (graph->GetX (), graph->GetX () + graph->GetN (), 0);
   }
   std::copy (ev->samples, ev->samples + ev->n_samples, graph->GetY ());
+  graph->GetYaxis()->SetRangeUser (*std::min_element (ev->samples, ev->samples + ev->n_samples), *std::max_element (ev->samples, ev->samples + ev->n_samples));
   graph->Draw ("AL+");
 
   window->Update();
