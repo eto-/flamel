@@ -5,9 +5,16 @@
 #include "giotto.hh"
 #include "flamel.hh"
 #include "omero.hh"
+#include <TSystem.h>
 
 bool quit = false;
 int main (int argc, char* argv[]) {
+  gSystem->ResetSignal(kSigSegmentationViolation);
+  gSystem->ResetSignal(kSigIllegalInstruction);
+  gSystem->ResetSignal(kSigSystem);
+  gSystem->ResetSignal(kSigPipe);
+  gSystem->ResetSignal(kSigFloatingException);
+
   sibilla::evoke ().parse (argc, argv);
 
   giotto g;
@@ -16,13 +23,12 @@ int main (int argc, char* argv[]) {
 
   omero o(f.info ());
 
-  f.start ();
-
   signal(SIGINT, [](int signum) { std::cerr << "signal caught, clean exiting" << std::endl; quit = true; });
   sigset_t mask, orig_mask;
   sigemptyset (&mask);
   sigaddset (&mask, SIGINT);
 
+  f.start ();
   for (int n = sibilla::evoke ()["events"].as<int>(); n > 0;) {
     if (quit) break;
     

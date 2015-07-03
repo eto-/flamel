@@ -3,7 +3,8 @@
 #include <ostream>
 
 struct evaristo {
-  u_int32_t counter, time_tag, n_samples;
+  u_int16_t marker, header_length;
+  u_int32_t counter, time_tag, n_samples, cpu_time_ms, unused[5];
   u_int16_t samples[0];
 };
 
@@ -13,6 +14,7 @@ struct metadata {
   int board;
   int n_bits;
   int sampling_rate;
+  int threshold;
 };
 
 std::ostream & operator << (std::ostream&, const metadata&);

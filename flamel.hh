@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <chrono>
 #include "evaristo.hh"
 
 class flamel {
@@ -25,7 +26,9 @@ class flamel {
     char *event_buffer_;
     uint32_t buffer_size_;
     void *decoded_event_;
+    bool sw_trigger_;
     metadata metadata_;
+    std::chrono::time_point<std::chrono::system_clock> start_time_; 
 
 
     void init_link ();

@@ -9,27 +9,52 @@ sibilla& sibilla::evoke () {
   return *me_;
 }
 
-sibilla::sibilla (): desc_("claudio options") {
-  desc_.add_options()
-    ("help,h", "produce help message")
-    ("usb-link,u", "usb link type")
-    ("link-number,l", po::value<int>()->default_value(0), "link number")
+sibilla::sibilla (): desc_() {
+
+  po::options_description link("link options");
+  link.add_options()
+    ("usb-link,U", "usb link type")
+    ("link-number,L", po::value<int>()->default_value(0), "link number")
+    ("node-number,N", po::value<int>()->default_value(0), "node number")
+    ("vme-base,V", po::value<u_int32_t>()->default_value(0), "VME base address")
     ("emulate-hw,E", "emulate the digitizer")
-    ("gate-width,g", po::value<int>()->required(), "gate width in samples")
-    ("post-trigger,p", po::value<int>()->default_value(0), "post trigger window (0-100)")
-    ("des-mode,d", "des mode")
-    ("dc_offset,D", po::value<int>()->default_value(0x2700), "channel dc offset") 
-    ("channel_id,C", po::value<int>()->default_value(1), "channel id (only odd if des-mode is enabled)")
-    ("filename,f", po::value<std::string>()->required(), "the output file name")
+    ;
+
+  po::options_description file("file options");
+  file.add_options()
+    ("filename,f", po::value<std::string>(), "the output file name")
     ("zip,z", "zip output file")
     ("wav,w", "wav output format")
     ("txt,t", "txt output format")
-    ("pretend,P", "skip file saving")
     ("comment,c", po::value<std::string>(), "comment")
-    ("run,r", po::value<int>()->required(), "run number")
-    ("events,e", po::value<int>()->required(), "events to acquire")
+    ("run,r", po::value<int>()->default_value(0), "run number")
+    ;
+
+  po::options_description trg("trigger options");
+  trg.add_options()
+    ("nim,n", "use NIM trigger-in level (default TTL)")
+    ("software-trigger,S", "enable software trigger")
+    ("events,e", po::value<int>()->default_value(100), "events to acquire")
+    ("gate-width,g", po::value<int>()->default_value(1000), "gate width in samples")
+    ("post-trigger,p", po::value<int>()->default_value(50), "post trigger window (0-100)")
+    ;
+
+  po::options_description ch("channels options");
+  ch.add_options()
+    ("des-mode,d", "des mode")
+    ("dc-offset,D", po::value<int>()->default_value(0xefff, "0xefff"), "channel dc offset (0x1000 for positive pulses and 0xefff for negative pulses)") 
+    ("channel-threshold,T", po::value<int>()->default_value(-1), "channel threshold for auto-trigger, negative means disabled (value in samples)")
+    ("positive-pulse,PP", "positive pulse polarity (default is negative)") 
+    ("channel-id,C", po::value<std::vector<int>>()->default_value(std::vector<int>{1}, "{1}"), "enabled channel (zero based, only odd if des-mode is enabled)")
+    ;
+
+  po::options_description other("other options");
+  other.add_options()
+    ("help,h", "produce help message")
     ("quiet,q", "do not run the display");
     ;
+
+  desc_.add(link).add(file).add(trg).add(ch).add(other);
 }
 
 void sibilla::parse (int argc, char *argv[]) {

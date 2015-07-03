@@ -10,7 +10,7 @@ omero::omero (const metadata& m) {
   o_txt_ = 0;
   o_wav_ = 0;
 
-  if (sibilla::evoke ()("pretend")) return;
+  if (!sibilla::evoke ()("filename")) return;
 
   filename_ = sibilla::evoke ()["filename"].as<std::string>();
 
@@ -46,6 +46,7 @@ omero::omero (const metadata& m) {
     std::ostringstream t;
     t << m.board << " (bits = " << m.n_bits << ")";
     o_wav_->setString (SF_STR_ARTIST, t.str ().c_str ());
+    o_wav_->setString (SF_STR_ALBUM, std::to_string(m.threshold).c_str ());
   }
 }
 
@@ -54,13 +55,9 @@ void omero::write (evaristo* ev) {
 
   if (o_txt_) *o_txt_ << *ev;
   if (o_wav_) {
-    const short marker = 0xFFFF;
-    const short header_lenght = sizeof(evaristo) / 2;
-
-    o_wav_->write (&marker, 1);
-    o_wav_->write (&header_lenght, 1);
-
-    o_wav_->write ((short *)ev, header_lenght + ev->n_samples);
+    ev->marker = 0xFFFF;
+    ev->header_length = sizeof(evaristo)/2;
+    o_wav_->write ((short *)ev, ev->header_length + ev->n_samples);
   }
 }
 

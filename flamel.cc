@@ -12,6 +12,7 @@
 #include "flamel.hh"
 #include "attila.hh"
 #include "sibilla.hh"
+#include <iostream>
 
 namespace {
   const std::string caen_error (CAEN_DGTZ_ErrorCode err) {
@@ -111,8 +112,11 @@ void flamel::close_link () {
 
 void flamel::init_link () {
   CAEN_DGTZ_ConnectionType link_type = sibilla::evoke ()("usb-link") ? CAEN_DGTZ_USB : CAEN_DGTZ_PCI_OpticalLink;
-  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_OpenDigitizer (link_type, 0, 0, 0, &handle_);
-  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_OpenDigitizer(" << link_type << "," << 0 << "," << 0 << "," << 0 << "): " << caen_error (err);
+  int link_id = sibilla::evoke ()["link-number"].as<int>();
+  int node_id = sibilla::evoke ()["node-number"].as<int>();
+  u_int32_t vme_base = sibilla::evoke ()["vme-base"].as<u_int32_t>();
+  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_OpenDigitizer (link_type, link_id, node_id, vme_base, &handle_);
+  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_OpenDigitizer(" << link_type << "," << link_id << "," << node_id << "," << vme_base << "): " << caen_error (err);
 
   err = CAEN_DGTZ_Reset (handle_);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_Reset(" << handle_ << "):" << caen_error (err);
@@ -125,17 +129,31 @@ void flamel::init_channels () {
     if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetDESMode(" << handle_ << ",true): " << caen_error (err);
   }
 
-  int ch = sibilla::evoke ()["channel_id"].as<int>();
-  int dc_offset = sibilla::evoke ()["dc_offset"].as<int>();
-  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetChannelDCOffset (handle_, ch, dc_offset);
-  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelDCOffset(" << handle_ << "," << 0 << "," << dc_offset << "): " << caen_error (err);
+  int dc_offset = sibilla::evoke ()["dc-offset"].as<int>();
+  int channel_threshold = sibilla::evoke ()["channel-threshold"].as<int>();
+  bool positive_pulse = sibilla::evoke ()("positive-pulse");
+  std::vector<int> channels = sibilla::evoke ()["channel-id"].as<std::vector<int>>();
+  u_int8_t channels_mask = 0;
+  for (int ch: channels) {
+    channels_mask |= 1 << ch;
 
-  u_int8_t channels_mask = 1 << ch;
-  err = CAEN_DGTZ_SetChannelEnableMask (handle_, channels_mask);
+    CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetChannelDCOffset (handle_, ch, dc_offset);
+    if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelDCOffset(" << handle_ << "," << ch << "," << dc_offset << "): " << caen_error (err);
+
+    if (channel_threshold < 0) continue;
+
+    err = CAEN_DGTZ_SetChannelTriggerThreshold(handle_, ch, channel_threshold);
+    if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelTriggerThreshold(" << handle_ << "," << ch << "," << channel_threshold << "): " << caen_error (err);
+
+    err = CAEN_DGTZ_SetChannelPulsePolarity(handle_, ch, positive_pulse ? CAEN_DGTZ_PulsePolarityPositive : CAEN_DGTZ_PulsePolarityNegative);
+    if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelPulsePolarity(" << handle_ << "," << ch << "," << (positive_pulse ? CAEN_DGTZ_PulsePolarityPositive : CAEN_DGTZ_PulsePolarityNegative) << "): " << caen_error (err);
+  }
+
+  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetChannelEnableMask (handle_, channels_mask);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelEnableMask(" << handle_ << "," << channels_mask << "): " << caen_error (err);
 
-  err = CAEN_DGTZ_SetChannelSelfTrigger (handle_, CAEN_DGTZ_TRGMODE_DISABLED, channels_mask);
-  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelSelfTrigger(" << handle_ << ",CAEN_DGTZ_TRGMODE_DISABLED,0xff): " << caen_error (err);
+  err = CAEN_DGTZ_SetChannelSelfTrigger (handle_, (channel_threshold < 0) ? CAEN_DGTZ_TRGMODE_DISABLED : CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT, channels_mask);
+  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelSelfTrigger(" << handle_ << ((channel_threshold < 0) ? "CAEN_DGTZ_TRGMODE_DISABLED" : "CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT") << "," << channels_mask << "): " << caen_error (err);
 }
 
 void flamel::init_trigger () {
@@ -145,8 +163,8 @@ void flamel::init_trigger () {
   err = CAEN_DGTZ_SetSWTriggerMode(handle_, CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetSWTriggerMode(" << handle_ << ",CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT): " << caen_error (err);
 
-  err = CAEN_DGTZ_SetIOLevel (handle_, CAEN_DGTZ_IOLevel_TTL);
-  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetIOLevel(" << handle_ << "," << CAEN_DGTZ_IOLevel_TTL << "): " << caen_error (err);
+  err = CAEN_DGTZ_SetIOLevel (handle_, sibilla::evoke ()("nim") ? CAEN_DGTZ_IOLevel_NIM : CAEN_DGTZ_IOLevel_TTL);
+  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetIOLevel(" << handle_ << "," << (sibilla::evoke ()("nim") ? CAEN_DGTZ_IOLevel_NIM : CAEN_DGTZ_IOLevel_TTL) << "): " << caen_error (err);
 
   u_int32_t record_length = sibilla::evoke ()["gate-width"].as<int>();
   err = CAEN_DGTZ_SetRecordLength (handle_, record_length);
@@ -158,6 +176,8 @@ void flamel::init_trigger () {
 
   err = CAEN_DGTZ_SetAcquisitionMode (handle_, CAEN_DGTZ_SW_CONTROLLED);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetAcquisitionMode(" << handle_ << "," << CAEN_DGTZ_SW_CONTROLLED << "): " << caen_error (err);
+
+  sw_trigger_ = sibilla::evoke ()("software-trigger");
 }
 
 void flamel::init_buffers () {
@@ -187,11 +207,13 @@ void flamel::init_metadata () {
 }
 
 void flamel::start () {
-  if (emulate_hw_) return;
+  if (!emulate_hw_) {
+    CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SWStartAcquisition (handle_);
+    if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SWStartAcquisition(" << handle_ << "): " << caen_error (err);
+    usleep (10000);
+  }
 
-  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SWStartAcquisition (handle_);
-  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SWStartAcquisition(" << handle_ << "): " << caen_error (err);
-  usleep (10000);
+  start_time_ = std::chrono::system_clock::now ();
 }
 
 void flamel::stop () {
@@ -207,9 +229,10 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
   std::vector<std::unique_ptr<evaristo>> ev_v;
   CAEN_DGTZ_ErrorCode err;
 
-  err = CAEN_DGTZ_SendSWtrigger (handle_);
-
-  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SendSWtrigger(" << handle_ << "): " << caen_error (err);
+  if (sw_trigger_) {
+    err = CAEN_DGTZ_SendSWtrigger (handle_);
+    if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SendSWtrigger(" << handle_ << "): " << caen_error (err);
+  }
 
   for (int j = 0; j < 5; j++) {
     bool no_irq = (!(get_register (0x8104) & (1 << 3)) && !wait_irq ());
@@ -232,14 +255,49 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
       CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_DecodeEvent (handle_, event_ptr, &decoded_event_);
       if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_DecodeEvent(" << handle_ << "," << event_ptr << ", NULL): " << caen_error (err); 
 
-      CAEN_DGTZ_UINT16_EVENT_t *decoded_event = reinterpret_cast<CAEN_DGTZ_UINT16_EVENT_t*>(decoded_event_);
+      std::unique_ptr<evaristo> ev;
+      int n_samples = 0;
+      if (metadata_.n_bits > 8) {
+	CAEN_DGTZ_UINT16_EVENT_t *decoded_event = reinterpret_cast<CAEN_DGTZ_UINT16_EVENT_t*>(decoded_event_);
 
-      std::unique_ptr<evaristo> ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new u_int16_t[6 + decoded_event->ChSize[1]]));
-      ev->n_samples = decoded_event->ChSize[1];
+	int total_size = sizeof(evaristo)/sizeof(u_int16_t);
+	for (int k = 0; k < MAX_UINT16_CHANNEL_SIZE; k++) { 
+	  total_size += decoded_event->ChSize[k];
+          if (decoded_event->ChSize[k] > 0) n_samples = decoded_event->ChSize[k];
+	}
+	
+	ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new u_int16_t[total_size]));
+
+	u_int16_t *ptr = ev->samples;
+	for (int k = 0; k < MAX_UINT16_CHANNEL_SIZE; k++) 
+	  if (decoded_event->ChSize[k] == n_samples) { 
+            memcpy (ptr, decoded_event->DataChannel[k], n_samples * sizeof(u_int16_t));
+	    ptr += n_samples;
+	  }
+      } else {
+	CAEN_DGTZ_UINT8_EVENT_t *decoded_event = reinterpret_cast<CAEN_DGTZ_UINT8_EVENT_t*>(decoded_event_);
+
+	int total_size = sizeof(evaristo)/sizeof(u_int16_t);
+	for (int k = 0; k < MAX_UINT8_CHANNEL_SIZE; k++) { 
+	  total_size += decoded_event->ChSize[k];
+          if (decoded_event->ChSize[k] > 0) n_samples = decoded_event->ChSize[k];
+	}
+	
+	ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new u_int16_t[total_size]));
+
+	u_int16_t *ptr = ev->samples;
+	for (int k = 0; k < MAX_UINT8_CHANNEL_SIZE; k++) 
+	  if (decoded_event->ChSize[k] == n_samples) {
+            for (int z = 0; z < n_samples; z++) ptr[z] = decoded_event->DataChannel[k][z];
+	    ptr += n_samples;
+	  }
+      }
+      
+      ev->n_samples = n_samples;
       ev->time_tag = event_info.TriggerTimeTag;
       ev->counter = event_info.EventCounter;
-      memcpy (ev->samples, decoded_event->DataChannel[1], decoded_event->ChSize[1] * 2);
-      
+      ev->cpu_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now () - start_time_).count ();
+
       ev_v.push_back (std::move(ev));
     }
   }
@@ -285,10 +343,11 @@ std::vector<std::unique_ptr<evaristo>> flamel::emulate_loop () {
 
   int n = sibilla::evoke ()["gate-width"].as<int>();
 
-  std::unique_ptr<evaristo> ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new u_int16_t[6 + n]));
+  std::unique_ptr<evaristo> ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new u_int16_t[sizeof(evaristo)/2 + n]));
   ev->n_samples = n;
   ev->time_tag = ++c * 100;
   ev->counter = c;
+  ev->cpu_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now () - start_time_).count ();
 
   int f = rand ();
   for (int i = 0; i < n; i++) ev->samples[i] = 512 + 400 * sin (2 * 3.14 * i / 500 + f);
