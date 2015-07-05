@@ -128,6 +128,7 @@ void flamel::init_channels () {
     CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetDESMode (handle_, CAEN_DGTZ_DISABLE);
     if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetDESMode(" << handle_ << ",true): " << caen_error (err);
   }
+  if (sibilla::evoke ()("test-pattern")) set_register (0x8004, 1<<3);
 
   int dc_offset = sibilla::evoke ()["dc-offset"].as<int>();
   int channel_threshold = sibilla::evoke ()["channel-threshold"].as<int>();
