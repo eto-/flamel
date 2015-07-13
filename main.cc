@@ -28,7 +28,11 @@ int main (int argc, char* argv[]) {
   sigemptyset (&mask);
   sigaddset (&mask, SIGINT);
 
+  sleep(3);
   f.start ();
+  int c = 0;
+  int prescale = sibilla::evoke ()["prescale"].as<int>();
+
   for (int n = sibilla::evoke ()["events"].as<int>(); n > 0;) {
     if (quit) break;
     
@@ -41,7 +45,7 @@ int main (int argc, char* argv[]) {
     n -= v.size ();
     for (int i = 0; i < v.size (); i++) {
       std::unique_ptr<evaristo> e = std::move(v[i]);
-      if (!(n % 5)) g.draw (e.get ());
+      if (!(c++ % prescale)) g.draw (e.get ());
       o.write (e.get ());
     }
   }

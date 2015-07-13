@@ -52,7 +52,8 @@ sibilla::sibilla (): desc_() {
   po::options_description other("other options");
   other.add_options()
     ("help,h", "produce help message")
-    ("quiet,q", "do not run the display");
+    ("quiet,q", "do not run the display")
+    ("prescale,R", po::value<int>()->default_value(10), "prescale the display");
     ;
 
   desc_.add(link).add(file).add(trg).add(ch).add(other);
