@@ -146,8 +146,8 @@ void flamel::init_channels () {
     err = CAEN_DGTZ_SetChannelTriggerThreshold(handle_, ch, channel_threshold);
     if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelTriggerThreshold(" << handle_ << "," << ch << "," << channel_threshold << "): " << caen_error (err);
 
-    err = CAEN_DGTZ_SetChannelPulsePolarity(handle_, ch, positive_pulse ? CAEN_DGTZ_PulsePolarityPositive : CAEN_DGTZ_PulsePolarityNegative);
-    if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelPulsePolarity(" << handle_ << "," << ch << "," << (positive_pulse ? CAEN_DGTZ_PulsePolarityPositive : CAEN_DGTZ_PulsePolarityNegative) << "): " << caen_error (err);
+    err = CAEN_DGTZ_SetTriggerPolarity(handle_, ch, positive_pulse ? CAEN_DGTZ_TriggerOnRisingEdge : CAEN_DGTZ_TriggerOnFallingEdge);
+    if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetTriggerPolarity(" << handle_ << "," << ch << "," << (positive_pulse ? CAEN_DGTZ_TriggerOnRisingEdge : CAEN_DGTZ_TriggerOnFallingEdge) << "): " << caen_error (err);
   }
 
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetChannelEnableMask (handle_, channels_mask);
@@ -331,7 +331,7 @@ uint32_t flamel::set_register_bits (uint16_t reg, uint32_t bits) {
 }
 
 bool flamel::wait_irq () {
-  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_IRQWait (handle_, 100);
+  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_IRQWait (handle_, 10);
   if (err == CAEN_DGTZ_Timeout) return false;
   else if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_IRQWait(" << handle_ << "," << 100 << "): " << caen_error (err);
 
