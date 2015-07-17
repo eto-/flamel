@@ -124,10 +124,9 @@ void flamel::init_link () {
 }
 
 void flamel::init_channels () {
-  if (sibilla::evoke ()("des-mode")) {
-    CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetDESMode (handle_, CAEN_DGTZ_DISABLE);
-    if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetDESMode(" << handle_ << ",true): " << caen_error (err);
-  }
+  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetDESMode (handle_, sibilla::evoke ()("des-mode") ?  CAEN_DGTZ_ENABLE : CAEN_DGTZ_DISABLE);
+  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetDESMode(" << handle_ << ",true): " << caen_error (err);
+
   if (sibilla::evoke ()("test-pattern")) set_register (0x8004, 1<<3);
 
   int dc_offset = sibilla::evoke ()["dc-offset"].as<int>();
@@ -138,7 +137,7 @@ void flamel::init_channels () {
   for (int ch: channels) {
     channels_mask |= 1 << ch;
 
-    CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetChannelDCOffset (handle_, ch, dc_offset);
+    err = CAEN_DGTZ_SetChannelDCOffset (handle_, ch, dc_offset);
     if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelDCOffset(" << handle_ << "," << ch << "," << dc_offset << "): " << caen_error (err);
 
     if (channel_threshold < 0) continue;
@@ -150,11 +149,12 @@ void flamel::init_channels () {
     if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetTriggerPolarity(" << handle_ << "," << ch << "," << (positive_pulse ? CAEN_DGTZ_TriggerOnRisingEdge : CAEN_DGTZ_TriggerOnFallingEdge) << "): " << caen_error (err);
   }
 
-  CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SetChannelEnableMask (handle_, channels_mask);
+  err = CAEN_DGTZ_SetChannelEnableMask (handle_, channels_mask);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelEnableMask(" << handle_ << "," << channels_mask << "): " << caen_error (err);
 
   err = CAEN_DGTZ_SetChannelSelfTrigger (handle_, (channel_threshold < 0) ? CAEN_DGTZ_TRGMODE_DISABLED : CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT, channels_mask);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelSelfTrigger(" << handle_ << ((channel_threshold < 0) ? "CAEN_DGTZ_TRGMODE_DISABLED" : "CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT") << "," << channels_mask << "): " << caen_error (err);
+
 }
 
 void flamel::init_trigger () {
