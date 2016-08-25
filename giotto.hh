@@ -5,6 +5,7 @@
 #include <TGraph.h>
 #include <TApplication.h>
 #include <memory>
+#include <vector>
 
 class evaristo;
 
@@ -17,7 +18,7 @@ class giotto {
 
   private:
     std::unique_ptr<TCanvas> window;
-    std::unique_ptr<TGraph> graph;
+    std::vector<std::unique_ptr<TGraph>> graphs;
     std::unique_ptr<TApplication> app;
 };
 

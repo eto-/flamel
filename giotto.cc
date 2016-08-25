@@ -15,23 +15,37 @@ giotto::giotto () {
 }
 
 giotto::~giotto () {
-  graph = 0;
+  graphs.resize(0);
   window = 0;
   app = 0;
 }
 
 void giotto::draw (evaristo* ev) {
-  if (!window) return;
+  if (!window || !ev->n_channels) return;
 
   window->cd();
 
-  if (!graph || graph->GetN () != ev->n_samples) {
-    graph = std::unique_ptr<TGraph>(new TGraph(ev->n_samples));
-    std::iota (graph->GetX (), graph->GetX () + graph->GetN (), 0);
+  if (graphs.size () != ev->n_channels || graphs[0]->GetN () != ev->n_samples) {
+    graphs.clear ();
+    graphs.resize (ev->n_channels);
+    for (int i = 0; i < ev->n_channels; i++) {
+      graphs[i] = std::unique_ptr<TGraph>(new TGraph(ev->n_samples));
+      std::iota (graphs[i]->GetX (), graphs[i]->GetX () + graphs[i]->GetN (), 0);
+    }
   }
-  std::copy (ev->samples, ev->samples + ev->n_samples, graph->GetY ());
-  graph->GetYaxis()->SetRangeUser (*std::min_element (ev->samples, ev->samples + ev->n_samples), *std::max_element (ev->samples, ev->samples + ev->n_samples));
-  graph->Draw ("AL+");
+
+  u_int16_t up=0, down=-1;
+  for (int i = 0; i < ev->n_channels; i++) {
+    std::copy (ev->samples + ev->n_samples * i, ev->samples + ev->n_samples * (i + 1), graphs[i]->GetY ());
+    up = std::max(*std::max_element (ev->samples + ev->n_samples * i, ev->samples + ev->n_samples * (i + 1)), up);
+    down = std::min(*std::min_element (ev->samples + ev->n_samples * i, ev->samples + ev->n_samples * (i + 1)), down);
+  }
+
+  for (int i = 0; i < ev->n_channels; i++) {
+    graphs[i]->GetYaxis()->SetRangeUser (down, up);
+    if (i == 0) graphs[i]->Draw ("AL+");
+    else graphs[i]->Draw ("L+S");
+  }
 
   window->Update();
   gSystem->ProcessEvents();

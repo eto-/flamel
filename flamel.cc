@@ -259,6 +259,7 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
 
       std::unique_ptr<evaristo> ev;
       int n_samples = 0;
+      int n_channels = 0;
       if (metadata_.n_bits > 8) {
 	CAEN_DGTZ_UINT16_EVENT_t *decoded_event = reinterpret_cast<CAEN_DGTZ_UINT16_EVENT_t*>(decoded_event_);
 
@@ -275,6 +276,7 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
 	  if (decoded_event->ChSize[k] == n_samples) { 
             memcpy (ptr, decoded_event->DataChannel[k], n_samples * sizeof(u_int16_t));
 	    ptr += n_samples;
+            n_channels ++;
 	  }
       } else {
 	CAEN_DGTZ_UINT8_EVENT_t *decoded_event = reinterpret_cast<CAEN_DGTZ_UINT8_EVENT_t*>(decoded_event_);
@@ -292,12 +294,15 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
 	  if (decoded_event->ChSize[k] == n_samples) {
             for (int z = 0; z < n_samples; z++) ptr[z] = decoded_event->DataChannel[k][z];
 	    ptr += n_samples;
+            n_channels ++;
 	  }
       }
       
       ev->n_samples = n_samples;
+      ev->n_channels = n_channels;
       ev->time_tag = event_info.TriggerTimeTag;
       ev->counter = event_info.EventCounter;
+      ev->unused[0] = ev->unused[1] = ev->unused[2] = ev->unused[3] = 0;
       ev->cpu_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now () - start_time_).count ();
 
       ev_v.push_back (std::move(ev));

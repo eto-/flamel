@@ -9,7 +9,11 @@ std::ostream & operator << (std::ostream &o, const evaristo &e) {
   o << "time_tag: " << e.time_tag << std::endl;
   o << "cpu_time_ms: " << e.cpu_time_ms << std::endl;  
   //o << "samples" << std::endl;
-  std::copy(e.samples, e.samples + e.n_samples, std::ostream_iterator<u_int16_t>(o, "\n"));
+  for (int i = 0; i < e.n_samples; i++) {
+    o << e.samples[i];
+    for (int k = 1; k < e.n_channels; k++) o << "	" << e.samples[i + k * e.n_samples];
+    o << std::endl;
+  }
 
   return o;
 }

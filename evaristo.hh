@@ -4,7 +4,7 @@
 
 struct evaristo {
   u_int16_t marker, header_length;
-  u_int32_t counter, time_tag, n_samples, cpu_time_ms, unused[5];
+  u_int32_t counter, time_tag, n_samples, cpu_time_ms, n_channels, unused[4];
   u_int16_t samples[0];
 };
 
