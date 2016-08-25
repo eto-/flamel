@@ -8,8 +8,8 @@ if [ -z `which ups` ]; then
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CAENDIGITIZER_LIB:$CAENCOMM_LIB:$CAENVME_LIB
 else
   echo "using FNAL setup"
-  setup gcc v4_9_1 
-  setup root v5_34_12 -q e4:prof
-  setup boost v1_56_0 -q e6:prof
+  setup gcc v4_9_2 
+  setup root v5_34_30 -q e7:prof
+  setup boost v1_57_0 -q e7:prof
   setup caendigitizer v2_6_5 -q e4:prof
 fi
