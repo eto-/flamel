@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <numeric>
 #include <TAxis.h>
 #include <TSystem.h>
 #include "giotto.hh"
