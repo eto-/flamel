@@ -114,7 +114,7 @@ void flamel::init_link () {
   CAEN_DGTZ_ConnectionType link_type = sibilla::evoke ()("usb-link") ? CAEN_DGTZ_USB : CAEN_DGTZ_PCI_OpticalLink;
   int link_id = sibilla::evoke ()["link-number"].as<int>();
   int node_id = sibilla::evoke ()["node-number"].as<int>();
-  u_int32_t vme_base = sibilla::evoke ()["vme-base"].as<u_int32_t>();
+  uint32_t vme_base = sibilla::evoke ()["vme-base"].as<uint32_t>();
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_OpenDigitizer (link_type, link_id, node_id, vme_base, &handle_);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_OpenDigitizer(" << link_type << "," << link_id << "," << node_id << "," << vme_base << "): " << caen_error (err);
 
@@ -134,7 +134,7 @@ void flamel::init_channels () {
   int channel_threshold = sibilla::evoke ()["channel-threshold"].as<int>();
   bool positive_pulse = sibilla::evoke ()("positive-pulse");
   std::vector<int> channels = sibilla::evoke ()["channel-id"].as<std::vector<int>>();
-  u_int8_t channels_mask = 0;
+  uint8_t channels_mask = 0;
   for (int ch: channels) {
     channels_mask |= 1 << ch;
 
@@ -168,7 +168,7 @@ void flamel::init_trigger () {
   err = CAEN_DGTZ_SetIOLevel (handle_, sibilla::evoke ()("nim") ? CAEN_DGTZ_IOLevel_NIM : CAEN_DGTZ_IOLevel_TTL);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetIOLevel(" << handle_ << "," << (sibilla::evoke ()("nim") ? CAEN_DGTZ_IOLevel_NIM : CAEN_DGTZ_IOLevel_TTL) << "): " << caen_error (err);
 
-  u_int32_t record_length = sibilla::evoke ()["gate-width"].as<int>();
+  uint32_t record_length = sibilla::evoke ()["gate-width"].as<int>();
   err = CAEN_DGTZ_SetRecordLength (handle_, record_length);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetRecordLength(" << handle_ << "," << record_length << "): " << caen_error (err);
 
@@ -178,6 +178,11 @@ void flamel::init_trigger () {
 
   err = CAEN_DGTZ_SetAcquisitionMode (handle_, CAEN_DGTZ_SW_CONTROLLED);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetAcquisitionMode(" << handle_ << "," << CAEN_DGTZ_SW_CONTROLLED << "): " << caen_error (err);
+
+  if (sibilla::evoke ()("majority")) {
+    uint32_t majority = std::max(sibilla::evoke ()["majority"].as<int>() - 1, 0);
+    set_register(0x810C, 0xFF | 0xF00000 | (majority << 24));
+  }
 
   sw_trigger_ = sibilla::evoke ()("software-trigger");
 }
@@ -263,33 +268,33 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
       if (metadata_.n_bits > 8) {
 	CAEN_DGTZ_UINT16_EVENT_t *decoded_event = reinterpret_cast<CAEN_DGTZ_UINT16_EVENT_t*>(decoded_event_);
 
-	int total_size = sizeof(evaristo)/sizeof(u_int16_t);
+	int total_size = sizeof(evaristo)/sizeof(uint16_t);
 	for (int k = 0; k < MAX_UINT16_CHANNEL_SIZE; k++) { 
 	  total_size += decoded_event->ChSize[k];
           if (decoded_event->ChSize[k] > 0) n_samples = decoded_event->ChSize[k];
 	}
 	
-	ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new u_int16_t[total_size]));
+	ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new uint16_t[total_size]));
 
-	u_int16_t *ptr = ev->samples;
+	uint16_t *ptr = ev->samples;
 	for (int k = 0; k < MAX_UINT16_CHANNEL_SIZE; k++) 
 	  if (decoded_event->ChSize[k] == n_samples) { 
-            memcpy (ptr, decoded_event->DataChannel[k], n_samples * sizeof(u_int16_t));
+            memcpy (ptr, decoded_event->DataChannel[k], n_samples * sizeof(uint16_t));
 	    ptr += n_samples;
             n_channels ++;
 	  }
       } else {
 	CAEN_DGTZ_UINT8_EVENT_t *decoded_event = reinterpret_cast<CAEN_DGTZ_UINT8_EVENT_t*>(decoded_event_);
 
-	int total_size = sizeof(evaristo)/sizeof(u_int16_t);
+	int total_size = sizeof(evaristo)/sizeof(uint16_t);
 	for (int k = 0; k < MAX_UINT8_CHANNEL_SIZE; k++) { 
 	  total_size += decoded_event->ChSize[k];
           if (decoded_event->ChSize[k] > 0) n_samples = decoded_event->ChSize[k];
 	}
 	
-	ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new u_int16_t[total_size]));
+	ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new uint16_t[total_size]));
 
-	u_int16_t *ptr = ev->samples;
+	uint16_t *ptr = ev->samples;
 	for (int k = 0; k < MAX_UINT8_CHANNEL_SIZE; k++) 
 	  if (decoded_event->ChSize[k] == n_samples) {
             for (int z = 0; z < n_samples; z++) ptr[z] = decoded_event->DataChannel[k][z];
@@ -350,7 +355,7 @@ std::vector<std::unique_ptr<evaristo>> flamel::emulate_loop () {
 
   int n = sibilla::evoke ()["gate-width"].as<int>();
 
-  std::unique_ptr<evaristo> ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new u_int16_t[sizeof(evaristo)/2 + n]));
+  std::unique_ptr<evaristo> ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new uint16_t[sizeof(evaristo)/2 + n]));
   ev->n_samples = n;
   ev->time_tag = ++c * 100;
   ev->counter = c;

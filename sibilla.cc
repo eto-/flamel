@@ -38,6 +38,7 @@ sibilla::sibilla (): desc_() {
     ("gate-width,g", po::value<int>()->default_value(1000), "gate width in samples")
     ("post-trigger,p", po::value<int>()->default_value(50), "post trigger window (0-100)")
     ("overlap-trigger,O", "allow triggers to overlap")
+    ("majority,m", po::value<int>(), "set the trigger majority")
     ;
 
   po::options_description ch("channels options");
