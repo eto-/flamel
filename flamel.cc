@@ -179,10 +179,9 @@ void flamel::init_trigger () {
   err = CAEN_DGTZ_SetAcquisitionMode (handle_, CAEN_DGTZ_SW_CONTROLLED);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetAcquisitionMode(" << handle_ << "," << CAEN_DGTZ_SW_CONTROLLED << "): " << caen_error (err);
 
-  if (sibilla::evoke ()("majority")) {
-    uint32_t majority = std::max(sibilla::evoke ()["majority"].as<int>() - 1, 0);
-    set_register(0x810C, 0xFF | 0xF00000 | (majority << 24));
-  }
+  int majority = sibilla::evoke ()["majority"].as<int>();
+  if (majority < 1) ATTILA << " majority has to be between 1 (no majority) and # channels";
+  set_register(0x810C, 0xFF | 0xF00000 | (uint32_t(majority - 1) << 24));
 
   sw_trigger_ = sibilla::evoke ()("software-trigger");
 }
