@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include "sibilla.hh"
 
 std::unique_ptr<sibilla> sibilla::me_(nullptr);
@@ -54,6 +55,7 @@ sibilla::sibilla (): desc_() {
   po::options_description other("other options");
   other.add_options()
     ("help,h", "produce help message")
+    ("options,o", po::value<std::string>(), "read from config file")
     ("quiet,q", "do not run the display")
     ("prescale,R", po::value<int>()->default_value(10), "prescale the display");
     ;
@@ -65,6 +67,12 @@ void sibilla::parse (int argc, char *argv[]) {
   try {
     po::store(po::parse_command_line(argc, argv, desc_), *this);
     po::notify(*this);
+    if (count("options")) {
+      std::ifstream f(operator[]("options").as<std::string>());
+      if (!f) throw(std::runtime_error("missing options file"));
+      po::store(po::parse_config_file(f, desc_), *this);
+      po::notify(*this);
+    }
   } catch (std::exception& e) {
     if (!count("help")) {
       std::cerr << e.what () << std::endl;
