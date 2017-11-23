@@ -45,10 +45,10 @@ sibilla::sibilla (): desc_() {
   po::options_description ch("channels options");
   ch.add_options()
     ("des-mode,d", "des mode")
-    ("dc-offset,D", po::value<int>()->default_value(0xefff, "0xefff"), "channel dc offset (0x1000 for positive pulses and 0xefff for negative pulses)") 
-    ("channel-threshold,T", po::value<int>()->default_value(-1), "channel threshold for auto-trigger, negative means disabled (value in samples)")
-    ("positive-pulse,K", "positive pulse polarity (default is negative)") 
     ("channel-id,C", po::value<std::vector<int>>()->default_value(std::vector<int>{1}, "{1}"), "enabled channel (zero based, only odd if des-mode is enabled)")
+    ("dc-offset,D", po::value<std::vector<int>>()->default_value(std::vector<int>{0xefff}, "{0xefff}"), "channel dc offset (0x1000 for positive pulses and 0xefff for negative pulses)") 
+    ("channel-threshold,T", po::value<std::vector<int>>()->default_value(std::vector<int>{-1}, "{-1}"), "channel threshold for auto-trigger, negative means disabled (value in samples)")
+    ("positive-pulse,K", "positive pulse polarity (default is negative)") 
     ("test-pattern,J", "enable test pattern")
     ;
 
