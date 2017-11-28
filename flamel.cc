@@ -132,14 +132,14 @@ void flamel::init_channels () {
 
   bool positive_pulse = sibilla::evoke ()("positive-pulse");
   std::vector<int> channels = sibilla::evoke ()["channel-id"].as<std::vector<int>>();
-  std::vector<int> channel_thresholds = sibilla::evoke ()["channel-id"].as<std::vector<int>>();
+  std::vector<int> channel_thresholds = sibilla::evoke ()["channel-threshold"].as<std::vector<int>>();
   std::vector<int> dc_offsets = sibilla::evoke ()["dc-offset"].as<std::vector<int>>();
   if (channel_thresholds.size () == 1) for (int i = 1; i < channels.size (); i++) channel_thresholds.push_back(channel_thresholds[0]);
   if (channel_thresholds.size () != channels.size ()) ATTILA << "channels.size != channel_thresholds.size";
   if (dc_offsets.size () == 1) for (int i = 1; i < channels.size (); i++) dc_offsets.push_back(dc_offsets[0]);
   if (dc_offsets.size () != channels.size ()) ATTILA << "channels.size != dc_offsets.size";
 
-  uint8_t channels_mask = 0;
+  uint16_t channels_mask = 0;
   bool enable_channel_threshold = false;
 
   for (int i = 0; i < channels.size(); i++) {
@@ -166,8 +166,12 @@ void flamel::init_channels () {
   err = CAEN_DGTZ_SetChannelEnableMask (handle_, channels_mask);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelEnableMask(" << handle_ << "," << channels_mask << "): " << caen_error (err);
 
-  err = CAEN_DGTZ_SetChannelSelfTrigger (handle_, enable_channel_threshold ? CAEN_DGTZ_TRGMODE_DISABLED : CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT, channels_mask);
-  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelSelfTrigger(" << handle_ << (enable_channel_threshold ? "CAEN_DGTZ_TRGMODE_DISABLED" : "CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT") << "," << channels_mask << "): " << caen_error (err);
+  err = CAEN_DGTZ_SetChannelSelfTrigger (handle_, !enable_channel_threshold ? CAEN_DGTZ_TRGMODE_DISABLED : CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT, channels_mask);
+  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelSelfTrigger(" << handle_ << (!enable_channel_threshold ? "CAEN_DGTZ_TRGMODE_DISABLED" : "CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT") << "," << channels_mask << "): " << caen_error (err);
+
+  int majority = sibilla::evoke ()["majority"].as<int>();
+  if (majority < 1) ATTILA << " majority has to be between 1 (no majority) and # channels";
+  if (majority > 1) set_register(0x810C, 0xFF | 0xF00000 | (uint32_t(majority - 1) << 24));
 
 }
 
@@ -191,10 +195,6 @@ void flamel::init_trigger () {
 
   err = CAEN_DGTZ_SetAcquisitionMode (handle_, CAEN_DGTZ_SW_CONTROLLED);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetAcquisitionMode(" << handle_ << "," << CAEN_DGTZ_SW_CONTROLLED << "): " << caen_error (err);
-
-  int majority = sibilla::evoke ()["majority"].as<int>();
-  if (majority < 1) ATTILA << " majority has to be between 1 (no majority) and # channels";
-  set_register(0x810C, 0xFF | 0xF00000 | (uint32_t(majority - 1) << 24));
 
   sw_trigger_ = sibilla::evoke ()("software-trigger");
 }
