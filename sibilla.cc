@@ -57,7 +57,8 @@ sibilla::sibilla (): desc_() {
     ("help,h", "produce help message")
     ("options,o", po::value<std::string>(), "read from config file")
     ("quiet,q", "do not run the display")
-    ("prescale,R", po::value<int>()->default_value(10), "prescale the display");
+    ("prescale,R", po::value<int>()->default_value(10), "prescale the display")
+    ("progress,P", po::value<int>()->default_value(60), "status progress (delay in seconds), negative means disabled");
     ;
 
   desc_.add(link).add(file).add(trg).add(ch).add(other);

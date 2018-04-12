@@ -6,6 +6,7 @@
 #include "flamel.hh"
 #include "omero.hh"
 #include <TSystem.h>
+#include <chrono>
 
 bool quit = false;
 int main (int argc, char* argv[]) {
@@ -33,8 +34,20 @@ int main (int argc, char* argv[]) {
   int c = 0;
   int prescale = sibilla::evoke ()["prescale"].as<int>();
 
-  for (int n = sibilla::evoke ()["events"].as<int>(); n > 0;) {
+  std::chrono::seconds seconds(sibilla::evoke ()["progress"].as<int>());
+  auto start = std::chrono::system_clock::now ();
+  auto next = start + std::chrono::duration_cast<std::chrono::seconds>(seconds);
+
+  int total = sibilla::evoke ()["events"].as<int>();
+  int n = 0;
+  while (n < total) {
     if (quit) break;
+
+    if (seconds.count () > 0 && std::chrono::system_clock::now () > next) {
+      float dt = std::chrono::duration_cast<std::chrono::seconds>(next - start).count();
+      std::cerr << "Processed " << n << " events in " << dt << " s at rate of " << n / dt << " cps" << std::endl;
+      next += std::chrono::duration_cast<std::chrono::seconds>(seconds);
+    }
     
     sigprocmask(SIG_BLOCK, &mask, &orig_mask);
 
@@ -42,13 +55,15 @@ int main (int argc, char* argv[]) {
 
     sigprocmask(SIG_SETMASK, &orig_mask, NULL);
 
-    n -= v.size ();
+    n += v.size ();
     for (int i = 0; i < v.size (); i++) {
       std::unique_ptr<evaristo> e = std::move(v[i]);
       if (!(c++ % prescale)) g.draw (e.get ());
       o.write (e.get ());
     }
   }
+  float dt = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now () - start).count();
+  std::cout << "Acquired " << n << " events in " << dt << " s at rate of " << n / dt << " cps" << std::endl;
 
   f.stop ();
 }
