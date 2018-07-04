@@ -71,7 +71,7 @@ namespace {
             { CAEN_DGTZ_XX761_FAMILY_CODE, 61 }};
 }
 
-flamel::flamel(): decoded_event_(0) { 
+flamel::flamel(): decoded_event_(0), wait_irq_(true) { 
   emulate_hw_ = sibilla::evoke ()("emulate-hw");
 }
 
@@ -117,6 +117,8 @@ void flamel::init_link () {
   uint32_t vme_base = sibilla::evoke ()["vme-base"].as<uint32_t>();
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_OpenDigitizer (link_type, link_id, node_id, vme_base, &handle_);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_OpenDigitizer(" << link_type << "," << link_id << "," << node_id << "," << vme_base << "): " << caen_error (err);
+
+  if (sibilla::evoke ()("usb-link") || vme_base != 0) wait_irq_ = false;
 
   err = CAEN_DGTZ_Reset (handle_);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_Reset(" << handle_ << "):" << caen_error (err);
@@ -354,6 +356,10 @@ uint32_t flamel::set_register_bits (uint16_t reg, uint32_t bits) {
 }
 
 bool flamel::wait_irq () {
+  if (!wait_irq_) {
+    usleep (1000);
+    return false;
+  }
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_IRQWait (handle_, 10);
   if (err == CAEN_DGTZ_Timeout) return false;
   else if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_IRQWait(" << handle_ << "," << 100 << "): " << caen_error (err);

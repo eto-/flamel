@@ -26,7 +26,7 @@ class flamel {
     char *event_buffer_;
     uint32_t buffer_size_;
     void *decoded_event_;
-    bool sw_trigger_;
+    bool sw_trigger_,wait_irq_;
     metadata metadata_;
     std::chrono::time_point<std::chrono::system_clock> start_time_; 
 
