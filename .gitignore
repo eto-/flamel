@@ -1,0 +1,5 @@
+*.wav
+.Rhistory
+*.txt.gz
+*.pdf
+*.png
