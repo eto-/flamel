@@ -12,7 +12,7 @@ std::ostream & operator << (std::ostream &o, const evaristo &e) {
   o << "n_channels: " << e.n_channels << std::endl;
   //o << "samples" << std::endl;
   const uint16_t * ptr = reinterpret_cast<const uint16_t*>(e.data);
-  for (int k = 1; k < e.n_channels; k++) {
+  for (int k = 0; k < e.n_channels; k++) {
     const evaristo::channel_data &d = *reinterpret_cast<const evaristo::channel_data*>(ptr);
     o << "ch: " << d.channel << std::endl;
     o << "n_samples: " << d.n_samples << std::endl;
@@ -22,6 +22,7 @@ std::ostream & operator << (std::ostream &o, const evaristo &e) {
 
     ptr += sizeof(evaristo::channel_data)/sizeof(uint16_t) + d.n_samples;
   }
+  o << std::endl;
 
   return o;
 }
@@ -31,6 +32,7 @@ std::ostream & operator << (std::ostream& o, const metadata& m) {
   o << "n_bits: " << m.n_bits << std::endl;
   o << "sampling_rate: " << m.sampling_rate << std::endl;
   o << "threshold: " << m.threshold << std::endl;
+  o << std::endl;
 
   return o;
 }
