@@ -36,10 +36,13 @@ void giotto::draw (evaristo* ev) {
   }
 
   u_int16_t up=0, down=-1;
+  const uint16_t * ptr = reinterpret_cast<const uint16_t*>(ev->data);
   for (int i = 0; i < ev->n_channels; i++) {
-    std::copy (ev->samples + ev->n_samples * i, ev->samples + ev->n_samples * (i + 1), graphs[i]->GetY ());
-    up = std::max(*std::max_element (ev->samples + ev->n_samples * i, ev->samples + ev->n_samples * (i + 1)), up);
-    down = std::min(*std::min_element (ev->samples + ev->n_samples * i, ev->samples + ev->n_samples * (i + 1)), down);
+    const evaristo::channel_data *d = reinterpret_cast<const evaristo::channel_data*>(ptr);
+    std::copy (d->samples, d->samples + d->n_samples, graphs[i]->GetY ());
+    up = std::max(*std::max_element (d->samples, d->samples + d->n_samples), up);
+    down = std::min(*std::min_element (d->samples, d->samples + d->n_samples), down);
+    ptr += sizeof(evaristo::channel_data)/sizeof(uint16_t) + d->n_samples;
   }
 
   for (int i = 0; i < ev->n_channels; i++) {

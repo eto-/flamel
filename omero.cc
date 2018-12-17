@@ -55,9 +55,12 @@ void omero::write (evaristo* ev) {
 
   if (o_txt_) *o_txt_ << *ev;
   if (o_wav_) {
-    ev->marker = 0xFFFF;
-    ev->header_length = sizeof(evaristo)/2; // PCM16 = 2
-    o_wav_->write ((short *)ev, ev->header_length + ev->n_samples * ev->n_channels);
+    int len = 0;
+    for (int k = 1; k < ev->n_channels; k++) {
+      const evaristo::channel_data *d = reinterpret_cast<const evaristo::channel_data*>(reinterpret_cast<const uint16_t*>(ev->data) + len);
+      len += sizeof(evaristo::channel_data)/sizeof(uint16_t) + d->n_samples;
+    }
+    o_wav_->write ((short *)ev, ev->header_length + len);
   }
 }
 

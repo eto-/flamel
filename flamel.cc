@@ -277,24 +277,28 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
       if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_DecodeEvent(" << handle_ << "," << event_ptr << ", NULL): " << caen_error (err); 
 
       std::unique_ptr<evaristo> ev;
-      int n_samples = 0;
+      int _n_samples = 0;
       int n_channels = 0;
       if (metadata_.n_bits > 8) {
 	CAEN_DGTZ_UINT16_EVENT_t *decoded_event = reinterpret_cast<CAEN_DGTZ_UINT16_EVENT_t*>(decoded_event_);
 
-	int total_size = sizeof(evaristo)/sizeof(uint16_t);
+	int total_size = sizeof(evaristo) / sizeof(uint16_t);
 	for (int k = 0; k < MAX_UINT16_CHANNEL_SIZE; k++) { 
-	  total_size += decoded_event->ChSize[k];
-          if (decoded_event->ChSize[k] > 0) n_samples = decoded_event->ChSize[k];
+          if (decoded_event->ChSize[k] <= 0) continue;
+	  total_size += decoded_event->ChSize[k] + sizeof(evaristo::channel_data) / sizeof(uint16_t);
+          _n_samples = decoded_event->ChSize[k];
 	}
 	
 	ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new uint16_t[total_size]));
 
-	uint16_t *ptr = ev->samples;
+	uint16_t *ptr = reinterpret_cast<uint16_t*>(ev->data);
 	for (int k = 0; k < MAX_UINT16_CHANNEL_SIZE; k++) 
-	  if (decoded_event->ChSize[k] == n_samples) { 
-            memcpy (ptr, decoded_event->DataChannel[k], n_samples * sizeof(uint16_t));
-	    ptr += n_samples;
+	  if (decoded_event->ChSize[k] > 0) { 
+	    evaristo::channel_data * d = reinterpret_cast<evaristo::channel_data*>(ptr);
+	    d->channel = k;
+	    d->n_samples = decoded_event->ChSize[k];
+            memcpy (d->samples, decoded_event->DataChannel[k], d->n_samples * sizeof(uint16_t));
+	    ptr += sizeof(evaristo::channel_data)/sizeof(uint16_t) + d->n_samples;
             n_channels ++;
 	  }
       } else {
@@ -302,22 +306,26 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
 
 	int total_size = sizeof(evaristo)/sizeof(uint16_t);
 	for (int k = 0; k < MAX_UINT8_CHANNEL_SIZE; k++) { 
-	  total_size += decoded_event->ChSize[k];
-          if (decoded_event->ChSize[k] > 0) n_samples = decoded_event->ChSize[k];
+          if (decoded_event->ChSize[k] <= 0) continue;
+	  total_size += decoded_event->ChSize[k] + sizeof(evaristo::channel_data) / sizeof(uint16_t);
+          _n_samples = decoded_event->ChSize[k];
 	}
 	
 	ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new uint16_t[total_size]));
 
-	uint16_t *ptr = ev->samples;
+	uint16_t *ptr = reinterpret_cast<uint16_t*>(ev->data);
 	for (int k = 0; k < MAX_UINT8_CHANNEL_SIZE; k++) 
-	  if (decoded_event->ChSize[k] == n_samples) {
-            for (int z = 0; z < n_samples; z++) ptr[z] = decoded_event->DataChannel[k][z];
-	    ptr += n_samples;
+	  if (decoded_event->ChSize[k] > 0) { 
+	    evaristo::channel_data * d = reinterpret_cast<evaristo::channel_data*>(ptr);
+	    d->channel = k;
+	    d->n_samples = decoded_event->ChSize[k];
+            for (int z = 0; z < d->n_samples; z++) d->samples[z] = decoded_event->DataChannel[k][z];
+	    ptr += sizeof(evaristo::channel_data)/sizeof(uint16_t) + d->n_samples;
             n_channels ++;
 	  }
       }
       
-      ev->n_samples = n_samples;
+      ev->n_samples = _n_samples;
       ev->n_channels = n_channels;
       ev->time_tag = event_info.TriggerTimeTag;
       ev->counter = event_info.EventCounter;
@@ -373,14 +381,16 @@ std::vector<std::unique_ptr<evaristo>> flamel::emulate_loop () {
 
   int n = sibilla::evoke ()["gate-width"].as<int>();
 
-  std::unique_ptr<evaristo> ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new uint16_t[sizeof(evaristo)/2 + n]));
+  std::unique_ptr<evaristo> ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new uint16_t[(sizeof(evaristo) + sizeof(evaristo::channel_data)) / sizeof(uint16_t) + n]));
   ev->n_samples = n;
   ev->time_tag = ++c * 100;
   ev->counter = c;
   ev->cpu_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now () - start_time_).count ();
 
   int f = rand ();
-  for (int i = 0; i < n; i++) ev->samples[i] = 512 + 400 * sin (2 * 3.14 * i / 500 + f);
+  ev->data[0].channel = 0;
+  ev->data[0].n_samples = n;
+  for (int i = 0; i < n; i++) ev->data[0].samples[i] = 512 + 400 * sin (2 * 3.14 * i / 500 + f);
 
   ev_v.push_back (std::move(ev));
   
