@@ -4,7 +4,7 @@
 #include "evaristo.hh"
 
 std::ostream & operator << (std::ostream &o, const evaristo &e) {
-  o << "n_samples: " << e.n_samples << std::endl;
+  o << "data_length: " << e.data_length << std::endl;
   o << "counter: " << e.counter << std::endl;
   o << "time_tag: " << e.time_tag << std::endl;
   o << "cpu_time_ms: " << e.cpu_time_ms << std::endl;  

@@ -279,10 +279,10 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
       std::unique_ptr<evaristo> ev;
       int _n_samples = 0;
       int n_channels = 0;
+      int total_size = sizeof(evaristo) / sizeof(uint16_t);
       if (metadata_.n_bits > 8) {
 	CAEN_DGTZ_UINT16_EVENT_t *decoded_event = reinterpret_cast<CAEN_DGTZ_UINT16_EVENT_t*>(decoded_event_);
 
-	int total_size = sizeof(evaristo) / sizeof(uint16_t);
 	for (int k = 0; k < MAX_UINT16_CHANNEL_SIZE; k++) { 
           if (decoded_event->ChSize[k] <= 0) continue;
 	  total_size += decoded_event->ChSize[k] + sizeof(evaristo::channel_data) / sizeof(uint16_t);
@@ -304,7 +304,6 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
       } else {
 	CAEN_DGTZ_UINT8_EVENT_t *decoded_event = reinterpret_cast<CAEN_DGTZ_UINT8_EVENT_t*>(decoded_event_);
 
-	int total_size = sizeof(evaristo)/sizeof(uint16_t);
 	for (int k = 0; k < MAX_UINT8_CHANNEL_SIZE; k++) { 
           if (decoded_event->ChSize[k] <= 0) continue;
 	  total_size += decoded_event->ChSize[k] + sizeof(evaristo::channel_data) / sizeof(uint16_t);
@@ -325,8 +324,9 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
 	  }
       }
       
-      ev->n_samples = _n_samples;
+      ev->data_length = total_size - sizeof(evaristo) / sizeof(uint16_t);
       ev->n_channels = n_channels;
+      ev->n_samples = 0; //(n_channels == 1) ? _n_samples + sizeof(evaristo::channel_data) / sizeof(uint16_t) : 0; 
       ev->time_tag = event_info.TriggerTimeTag;
       ev->counter = event_info.EventCounter;
       ev->unused[0] = ev->unused[1] = ev->unused[2] = ev->unused[3] = 0;
@@ -377,6 +377,7 @@ bool flamel::wait_irq () {
 
 std::vector<std::unique_ptr<evaristo>> flamel::emulate_loop () {
   std::vector<std::unique_ptr<evaristo>> ev_v;
+  /*
   static int c = 0;
 
   int n = sibilla::evoke ()["gate-width"].as<int>();
@@ -393,7 +394,8 @@ std::vector<std::unique_ptr<evaristo>> flamel::emulate_loop () {
   for (int i = 0; i < n; i++) ev->data[0].samples[i] = 512 + 400 * sin (2 * 3.14 * i / 500 + f);
 
   ev_v.push_back (std::move(ev));
-  
+  */
+
   usleep (10000);
   return ev_v;
 }
