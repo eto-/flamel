@@ -26,11 +26,12 @@ void giotto::draw (evaristo* ev) {
 
   window->cd();
 
-  if (graphs.size () != ev->n_channels || graphs[0]->GetN () != ev->n_samples) {
+  int n_samples = reinterpret_cast<const evaristo::channel_data*>(ev->data)->n_samples;
+  if (graphs.size () != ev->n_channels || graphs[0]->GetN () != n_samples) {
     graphs.clear ();
     graphs.resize (ev->n_channels);
     for (int i = 0; i < ev->n_channels; i++) {
-      graphs[i] = std::unique_ptr<TGraph>(new TGraph(ev->n_samples));
+      graphs[i] = std::unique_ptr<TGraph>(new TGraph(n_samples));
       std::iota (graphs[i]->GetX (), graphs[i]->GetX () + graphs[i]->GetN (), 0);
     }
   }
