@@ -329,7 +329,7 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
       ev->n_samples = 0; //(n_channels == 1) ? _n_samples + sizeof(evaristo::channel_data) / sizeof(uint16_t) : 0; 
       ev->time_tag = event_info.TriggerTimeTag;
       ev->counter = event_info.EventCounter;
-      ev->unused[0] = ev->unused[1] = ev->unused[2] = ev->unused[3] = 0;
+      ev->unused[0] = ev->unused[1] = ev->unused[2] = 0;
       ev->cpu_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now () - start_time_).count ();
 
       ev_v.push_back (std::move(ev));
