@@ -9,7 +9,7 @@
 #include <chrono>
 
 bool quit = false;
-int main (int argc, char* argv[]) {
+int main (int argc, char* argv[]) { 
   gSystem->ResetSignal(kSigSegmentationViolation);
   gSystem->ResetSignal(kSigIllegalInstruction);
   gSystem->ResetSignal(kSigSystem);
@@ -51,7 +51,15 @@ int main (int argc, char* argv[]) {
     
     sigprocmask(SIG_BLOCK, &mask, &orig_mask);
 
-    auto v = f.loop ();
+    std::vector<std::unique_ptr<evaristo>> v;
+
+    try {
+      v = f.loop ();
+    } catch (std::runtime_error e) {
+      std::cerr << "Exception in flamel loop: " << e.what() << std::endl;
+      std::cerr << "Clean exiting" << std::endl;
+      break;
+    }
 
     sigprocmask(SIG_SETMASK, &orig_mask, NULL);
 
