@@ -225,6 +225,8 @@ void flamel::init_metadata () {
   metadata_.board = 1700 + v17xx_modules[(CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode))];
   metadata_.n_bits = BoardInfo.ADC_NBits;
   metadata_.sampling_rate = sample_rates_MHz[CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode)] * (1 + 1 * sibilla::evoke ()("des-mode"));
+  metadata_.gate_length = sibilla::evoke ()["gate-width"].as<int>();
+  metadata_.post_trigger = sibilla::evoke ()["post-trigger"].as<int>();
 }
 
 void flamel::start () {
@@ -362,6 +364,10 @@ bool flamel::wait_irq () {
   }
   CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_IRQWait (handle_, 10);
   if (err == CAEN_DGTZ_Timeout) return false;
+  else if (err == CAEN_DGTZ_GenericError) {
+    BRENNO << " ignoring CAEN_DGTZ_GenericError in CAEN_DGTZ_IRQWait";
+    return false;
+  }
   else if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_IRQWait(" << handle_ << "," << 100 << "): " << caen_error (err);
 
   return true;
