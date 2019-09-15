@@ -227,6 +227,7 @@ void flamel::init_metadata () {
   metadata_.sampling_rate = sample_rates_MHz[CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode)] * (1 + 1 * sibilla::evoke ()("des-mode"));
   metadata_.gate_length = sibilla::evoke ()["gate-width"].as<int>();
   metadata_.post_trigger = sibilla::evoke ()["post-trigger"].as<int>();
+  metadata_.threshold = sibilla::evoke ()["channel-threshold"].as<std::vector<int>>()[0];
 }
 
 void flamel::start () {
