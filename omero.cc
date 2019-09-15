@@ -46,7 +46,8 @@ omero::omero (const metadata& m) {
     std::ostringstream t;
     t << m.board << " (bits = " << m.n_bits << ")";
     o_wav_->setString (SF_STR_ARTIST, t.str ().c_str ());
-    o_wav_->setString (SF_STR_ALBUM, std::to_string(m.threshold).c_str ());
+    o_wav_->setString (SF_STR_ALBUM, ("threshold = " + std::to_string(m.threshold)).c_str ());
+    o_wav_->setString (SF_STR_TRACKNUMBER, ("gate = " + std::to_string(m.gate_length) + " post_rigger = " + std::to_string(m.post_trigger)).c_str());
   }
 }
 
