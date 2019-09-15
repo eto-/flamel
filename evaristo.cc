@@ -23,6 +23,10 @@ std::ostream & operator << (std::ostream& o, const metadata& m) {
   o << "n_bits: " << m.n_bits << std::endl;
   o << "sampling_rate: " << m.sampling_rate << std::endl;
   o << "threshold: " << m.threshold << std::endl;
+  o << "gate_length: " << m.gate_length << std::endl;
+  o << "post_trigger: " << m.post_trigger << std::endl;
+
+  return o;
 }
 
 

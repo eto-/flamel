@@ -16,6 +16,8 @@ struct metadata {
   int n_bits;
   int sampling_rate;
   int threshold;
+  int gate_length;
+  int post_trigger;
 };
 
 std::ostream & operator << (std::ostream&, const metadata&);
