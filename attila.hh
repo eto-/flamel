@@ -5,9 +5,10 @@
 class attila {
   public:
     attila(const std::string& file, int line = 0, bool fail=true);
-#define ATTILA attila(__FILE__, __LINE__)
+#define ATTILA attila(__FILE__, __LINE__, true)
+#define BRENNO attila(__FILE__, __LINE__, false)
 
-    ~attila ();
+    ~attila () noexcept(false);
     
     void exception ();
 

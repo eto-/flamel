@@ -8,7 +8,7 @@ attila::attila (const std::string& file, int line, bool fail): fail_(fail) {
   s_ << " ";
 }
 
-attila::~attila () {
+attila::~attila () noexcept(false) {
   exception ();
 }
 
