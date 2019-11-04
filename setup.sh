@@ -6,7 +6,7 @@ if [ -z `which ups` ]; then
   export BOOST_INC=/usr/include
   export BOOST_LIB=/usr/lib/x86_64-linux-gnu
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CAENDIGITIZER_LIB:$CAENCOMM_LIB:$CAENVME_LIB
-  choose_root root_v6.08.06
+  choose_root current
 else
   echo "using FNAL setup"
   setup gcc v4_9_2 
