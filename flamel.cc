@@ -173,8 +173,8 @@ void flamel::init_channels () {
 
   int majority = sibilla::evoke ()["majority"].as<int>();
   if (majority < 1) ATTILA << " majority has to be between 1 (no majority) and # channels";
-  if (majority > 1) set_register(0x810C, 0xFF | 0xF00000 | (uint32_t(majority - 1) << 24));
-
+  else if (majority > 1) set_register_bits(0x810C, (uint32_t(majority - 1) << 24) | (0xF << 20));
+//  else clear_register_bits(0x810C, 0x7 << 24); // default
 }
 
 void flamel::init_trigger () {
@@ -352,6 +352,17 @@ uint32_t flamel::set_register_bits (uint16_t reg, uint32_t bits) {
 
   if (bits) {
     val |= bits;
+    set_register (reg, val);
+  }
+
+  return val;
+}
+
+uint32_t flamel::clear_register_bits (uint16_t reg, uint32_t bits) {
+  uint32_t val = get_register (reg);
+
+  if (bits) {
+    val &= ~bits;
     set_register (reg, val);
   }
 
