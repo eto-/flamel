@@ -42,8 +42,8 @@ class flamel {
 
     uint32_t get_register (uint16_t reg); 
     void set_register (uint16_t reg, uint32_t value);
-    uint32_t set_register_bits (uint16_t reg, uint32_t bits);
-    uint32_t clear_register_bits (uint16_t reg, uint32_t bits);
+    uint32_t set_register_bits (uint16_t reg, uint32_t mask);
+    uint32_t clear_register_bits (uint16_t reg, uint32_t mask);
     bool wait_irq ();
 };
 #endif

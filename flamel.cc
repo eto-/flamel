@@ -195,8 +195,13 @@ void flamel::init_trigger () {
   err = CAEN_DGTZ_SetPostTriggerSize (handle_, post_trigger);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetPostTriggerSize(" << handle_ << "," << post_trigger << "): " << caen_error (err);
 
-  err = CAEN_DGTZ_SetAcquisitionMode (handle_, CAEN_DGTZ_SW_CONTROLLED);
-  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetAcquisitionMode(" << handle_ << "," << CAEN_DGTZ_SW_CONTROLLED << "): " << caen_error (err);
+  // count all triggers + ONE BUFFER FREE full + LVDS_IO + SW_CONTROLLED or LVDS CONTROLLED
+  set_register(0x8100, (1 << 3) | (1 << 5) | (1 << 8) | (1 << 9) | (1 << 11) | (sibilla::evoke ()("slave") ? 3 : 0));
+
+  // LVDS GPIO: 0-3=output - 4-15=input, mode=nBUSY/nVETO 
+  set_register_bits (0x811C, (1 << 8) | (1 << 2));
+  clear_register_bits (0x811C, 3 << 3);
+  set_register (0x81A0, 0x2222);
 
   sw_trigger_ = sibilla::evoke ()("software-trigger");
 }
@@ -347,22 +352,22 @@ uint32_t flamel::get_register (uint16_t reg) {
   return val;
 }
 
-uint32_t flamel::set_register_bits (uint16_t reg, uint32_t bits) {
+uint32_t flamel::set_register_bits (uint16_t reg, uint32_t mask) {
   uint32_t val = get_register (reg);
 
-  if (bits) {
-    val |= bits;
+  if (mask) {
+    val |= mask;
     set_register (reg, val);
   }
 
   return val;
 }
 
-uint32_t flamel::clear_register_bits (uint16_t reg, uint32_t bits) {
+uint32_t flamel::clear_register_bits (uint16_t reg, uint32_t mask) {
   uint32_t val = get_register (reg);
 
-  if (bits) {
-    val &= ~bits;
+  if (mask) {
+    val &= ~mask;
     set_register (reg, val);
   }
 

@@ -40,6 +40,7 @@ sibilla::sibilla (): desc_() {
     ("post-trigger,p", po::value<int>()->default_value(50), "post trigger window (0-100)")
     ("overlap-trigger,O", "allow triggers to overlap")
     ("majority,m", po::value<int>()->default_value(1), "set the trigger majority (1...#channels)")
+    ("slave,s", "slave mode, GPIO controlled")
     ;
 
   po::options_description ch("channels options");
