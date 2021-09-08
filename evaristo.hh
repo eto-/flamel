@@ -1,3 +1,5 @@
+// Evaristo is the event storing the waveform and other informations
+// Aristotele contains the run metadata
 #ifndef EVARISTO_HH
 #define EVARISTO_HH
 #include <ostream>
@@ -11,7 +13,7 @@ struct evaristo {
 
 std::ostream & operator << (std::ostream&, const evaristo&);
 
-struct metadata {
+struct aristotele {
   int board;
   int n_bits;
   int sampling_rate;
@@ -20,7 +22,7 @@ struct metadata {
   int post_trigger;
 };
 
-std::ostream & operator << (std::ostream&, const metadata&);
+std::ostream & operator << (std::ostream&, const aristotele&);
 
  
 #endif

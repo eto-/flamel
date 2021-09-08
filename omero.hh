@@ -1,3 +1,5 @@
+// Omero writes the event on disk using a wav format
+// (or aleternately in plain text)
 #ifndef OMERO_HH
 #define OMERO_HH
 #include <string>
@@ -7,11 +9,11 @@
 
 
 class evaristo;
-class metadata;
+class aristotele;
 
 class omero {
   public:
-    omero (const metadata&);
+    omero (const aristotele&);
 
     void write (evaristo*);
 

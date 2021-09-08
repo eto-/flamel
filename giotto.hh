@@ -1,3 +1,4 @@
+// Giotto displays the waveforms on monitor using root TGraph
 #ifndef GIOTTO_HH
 #define GIOTTO_HH
 

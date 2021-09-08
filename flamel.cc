@@ -85,9 +85,9 @@ flamel::~flamel() {
 
 void flamel::init () {
   if (emulate_hw_) {
-    metadata_.board = -1751;
-    metadata_.n_bits = 10;
-    metadata_.sampling_rate = 1000000000;
+    aristotele_.board = -1751;
+    aristotele_.n_bits = 10;
+    aristotele_.sampling_rate = 1000000000;
     return;
   }
 
@@ -222,12 +222,12 @@ void flamel::init_metadata () {
 
   std::cout << "found digitizer " << BoardInfo.SerialNumber << " model " << BoardInfo.ModelName << " ROC # " << BoardInfo.ROC_FirmwareRel << " AMC # " << BoardInfo.AMC_FirmwareRel << std::endl;
 
-  metadata_.board = 1700 + v17xx_modules[(CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode))];
-  metadata_.n_bits = BoardInfo.ADC_NBits;
-  metadata_.sampling_rate = sample_rates_MHz[CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode)] * (1 + 1 * sibilla::evoke ()("des-mode"));
-  metadata_.gate_length = sibilla::evoke ()["gate-width"].as<int>();
-  metadata_.post_trigger = sibilla::evoke ()["post-trigger"].as<int>();
-  metadata_.threshold = sibilla::evoke ()["channel-threshold"].as<std::vector<int>>()[0];
+  aristotele_.board = 1700 + v17xx_modules[(CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode))];
+  aristotele_.n_bits = BoardInfo.ADC_NBits;
+  aristotele_.sampling_rate = sample_rates_MHz[CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode)] * (1 + 1 * sibilla::evoke ()("des-mode"));
+  aristotele_.gate_length = sibilla::evoke ()["gate-width"].as<int>();
+  aristotele_.post_trigger = sibilla::evoke ()["post-trigger"].as<int>();
+  aristotele_.threshold = sibilla::evoke ()["channel-threshold"].as<std::vector<int>>()[0];
 }
 
 void flamel::start () {
@@ -282,7 +282,7 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
       std::unique_ptr<evaristo> ev;
       int n_samples = 0;
       int n_channels = 0;
-      if (metadata_.n_bits > 8) {
+      if (aristotele_.n_bits > 8) {
 	CAEN_DGTZ_UINT16_EVENT_t *decoded_event = reinterpret_cast<CAEN_DGTZ_UINT16_EVENT_t*>(decoded_event_);
 
 	int total_size = sizeof(evaristo)/sizeof(uint16_t);

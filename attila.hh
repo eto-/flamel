@@ -1,3 +1,7 @@
+// Attila manages logging and errors
+// two macros are defined to add filename and linenumber:
+// BRENNO simply dump on cerr the message
+// ATTILA logs the message and trows a runtime_error exception
 #ifndef ATTILA_HH
 #define ATTILA_HH
 #include <sstream>

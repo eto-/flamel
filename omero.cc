@@ -6,7 +6,7 @@
 #include "sibilla.hh"
 #include "evaristo.hh"
 
-omero::omero (const metadata& m) {
+omero::omero (const aristotele& m) {
   o_txt_ = 0;
   o_wav_ = 0;
 
