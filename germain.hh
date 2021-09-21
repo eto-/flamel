@@ -12,24 +12,21 @@
 #include <vector>
 #include <memory>
 #include <chrono>
-#include "evaristo.hh"
+#include "paracelsus.hh"
 
-class germain {
+class germain: public paracelsus {
   public:
     germain ();
-    ~germain ();
+    virtual ~germain ();
 
-    void init ();
-    void start ();
-    void stop ();
+    virtual void init ();
+    virtual void start ();
+    virtual void stop ();
 
-    std::vector<std::unique_ptr<evaristo>> loop ();
-
-    const aristotele& info () const { return aristotele_; }
+    virtual std::vector<std::unique_ptr<evaristo>> loop ();
 
   private:
     uint64_t handle_;
-    aristotele aristotele_;
     /*
     char *event_buffer_;
     uint32_t buffer_size_;
