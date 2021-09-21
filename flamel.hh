@@ -1,10 +1,4 @@
 // Flamel manages the alchemy of the communications with the CAEN digitizer
-//   - init initialize the digitizer
-//   - star & stop manage the run
-//   - loop fetches new data from the digitizer
-//   - info returns metadata
-//   - loop fetches new data from the digitizer
-//   - info returns metadata
 #ifndef FLAMEL_HH
 #define FLAMEL_HH
 
@@ -12,20 +6,18 @@
 #include <vector>
 #include <memory>
 #include <chrono>
-#include "evaristo.hh"
+#include "paracelsus.hh"
 
-class flamel {
+class flamel: public paracelsus {
   public:
     flamel ();
-    ~flamel ();
+    virtual ~flamel ();
 
-    void init ();
-    void start ();
-    void stop ();
+    virtual void init ();
+    virtual void start ();
+    virtual void stop ();
 
-    std::vector<std::unique_ptr<evaristo>> loop ();
-
-    const aristotele& info () const { return aristotele_; }
+    virtual std::vector<std::unique_ptr<evaristo>> loop ();
 
   private:
     bool emulate_hw_;
@@ -34,9 +26,6 @@ class flamel {
     uint32_t buffer_size_;
     void *decoded_event_;
     bool sw_trigger_,wait_irq_;
-    aristotele aristotele_;
-    std::chrono::time_point<std::chrono::system_clock> start_time_; 
-
 
     void init_link ();
     void init_channels ();
