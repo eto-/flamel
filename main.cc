@@ -19,10 +19,10 @@ int main (int argc, char* argv[]) {
   sibilla::evoke ().parse (argc, argv);
 
   giotto g;
-  flamel f;
-  f.init ();
+  paracelsus *p = new flamel;
+  p->init ();
 
-  omero o(f.info ());
+  omero o(p->info ());
 
   signal(SIGINT, [](int signum) { std::cerr << "signal caught, clean exiting" << std::endl; quit = true; });
   sigset_t mask, orig_mask;
@@ -30,7 +30,7 @@ int main (int argc, char* argv[]) {
   sigaddset (&mask, SIGINT);
 
   sleep(3);
-  f.start ();
+  p->start ();
   int c = 0;
   int prescale = sibilla::evoke ()["prescale"].as<int>();
 
@@ -54,7 +54,7 @@ int main (int argc, char* argv[]) {
     std::vector<std::unique_ptr<evaristo>> v;
 
     try {
-      v = f.loop ();
+      v = p->loop ();
     } catch (std::runtime_error &e) {
       std::cerr << "Exception in flamel loop: " << e.what() << std::endl;
       std::cerr << "Clean exiting" << std::endl;
@@ -73,5 +73,5 @@ int main (int argc, char* argv[]) {
   float dt = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now () - start).count();
   std::cout << "Acquired " << n << " events in " << dt << " s at rate of " << n / dt << " cps" << std::endl;
 
-  f.stop ();
+  p->stop ();
 }
