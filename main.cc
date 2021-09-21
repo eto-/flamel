@@ -55,7 +55,7 @@ int main (int argc, char* argv[]) {
 
     try {
       v = f.loop ();
-    } catch (std::runtime_error e) {
+    } catch (std::runtime_error &e) {
       std::cerr << "Exception in flamel loop: " << e.what() << std::endl;
       std::cerr << "Clean exiting" << std::endl;
       break;
@@ -64,7 +64,7 @@ int main (int argc, char* argv[]) {
     sigprocmask(SIG_SETMASK, &orig_mask, NULL);
 
     n += v.size ();
-    for (int i = 0; i < v.size (); i++) {
+    for (unsigned int i = 0; i < v.size (); i++) {
       std::unique_ptr<evaristo> e = std::move(v[i]);
       if (!(c++ % prescale)) g.draw (e.get ());
       o.write (e.get ());
