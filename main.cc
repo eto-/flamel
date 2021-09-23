@@ -4,6 +4,7 @@
 #include "sibilla.hh"
 #include "giotto.hh"
 #include "flamel.hh"
+#include "germain.hh"
 #include "omero.hh"
 #include <TSystem.h>
 #include <chrono>
@@ -19,7 +20,10 @@ int main (int argc, char* argv[]) {
   sibilla::evoke ().parse (argc, argv);
 
   giotto g;
-  paracelsus *p = new flamel;
+  paracelsus *p;
+  if (sibilla::evoke ()["host"].as<std::string> ().empty ()) p = new flamel;
+  else p = new germain;
+
   p->init ();
 
   omero o(p->info ());

@@ -26,12 +26,15 @@ class germain: public paracelsus {
     virtual std::vector<std::unique_ptr<evaristo>> loop ();
 
   private:
-    uint64_t handle_;
+    uint64_t handle_, scope_;
+    bool sw_trigger_, selftrigger_;
+    unsigned int board_channels_;
+    uint16_t **buffer_;
+    size_t *sizes_;
     /*
     char *event_buffer_;
     uint32_t buffer_size_;
     void *decoded_event_;
-    bool sw_trigger_,wait_irq_;
     std::chrono::time_point<std::chrono::system_clock> start_time_; 
 
     */
@@ -42,5 +45,10 @@ class germain: public paracelsus {
     void init_buffers ();
     void init_metadata ();
     void close_link ();
+
+    void send (const std::string& path);
+    template<typename T> T get (const std::string& path);
+    template<typename T> void set (const std::string& path, T value) { _set(path, std::to_string(value)); }
+    void _set (const std::string& path, const std::string& value);
 };
 #endif

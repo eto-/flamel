@@ -18,6 +18,7 @@ sibilla::sibilla (): desc_() {
     ("link-number,L", po::value<int>()->default_value(0), "link number")
     ("node-number,N", po::value<int>()->default_value(0), "node number")
     ("vme-base,V", po::value<u_int32_t>()->default_value(0), "VME base address")
+    ("host,H", po::value<std::string>()->default_value(""), "hostname (felib only)")
     ("emulate-hw,E", "emulate the digitizer")
     ;
 
