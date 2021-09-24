@@ -4,6 +4,7 @@
 #include "sibilla.hh"
 #include "giotto.hh"
 #include "flamel.hh"
+#include "stgermain.hh"
 #include "omero.hh"
 #include <TSystem.h>
 #include <chrono>
@@ -19,10 +20,13 @@ int main (int argc, char* argv[]) {
   sibilla::evoke ().parse (argc, argv);
 
   giotto g;
-  paracelsus *p = new flamel;
-  p->init ();
+  alchemy *a;
+  if (sibilla::evoke ()["host"].as<std::string> ().empty ()) a = new flamel;
+  else a = new stgermain;
 
-  omero o(p->info ());
+  a->init ();
+
+  omero o(a->info ());
 
   signal(SIGINT, [](int signum) { std::cerr << "signal caught, clean exiting" << std::endl; quit = true; });
   sigset_t mask, orig_mask;
@@ -30,7 +34,7 @@ int main (int argc, char* argv[]) {
   sigaddset (&mask, SIGINT);
 
   sleep(3);
-  p->start ();
+  a->start ();
   int c = 0;
   int prescale = sibilla::evoke ()["prescale"].as<int>();
 
@@ -54,7 +58,7 @@ int main (int argc, char* argv[]) {
     std::vector<std::unique_ptr<evaristo>> v;
 
     try {
-      v = p->loop ();
+      v = a->loop ();
     } catch (std::runtime_error &e) {
       std::cerr << "Exception in flamel loop: " << e.what() << std::endl;
       std::cerr << "Clean exiting" << std::endl;
@@ -73,5 +77,5 @@ int main (int argc, char* argv[]) {
   float dt = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now () - start).count();
   std::cout << "Acquired " << n << " events in " << dt << " s at rate of " << n / dt << " cps" << std::endl;
 
-  p->stop ();
+  a->stop ();
 }
