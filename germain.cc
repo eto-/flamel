@@ -65,23 +65,10 @@ void germain::init () {
   init_metadata ();
 }
 
-void germain::start () {
-  send("/cmd/armacquisition");
-  send("/cmd/swstartacquisition");
-
-  start_time_ = std::chrono::system_clock::now ();
-}
-
-void germain::stop () {
-  send("/cmd/disarmacquisition");
-}
-
-
 void germain::close_link () {
   int ret = CAEN_FELib_Close(handle_);
   if (ret != CAEN_FELib_Success) ATTILA << " CAEN_DGTZ_CloseDigitizer(" << handle_ << "): " << caen_error (ret);
 }
-
 
 void germain::init_link () {
   std::string host = sibilla::evoke ()["host"].as<std::string>();
@@ -89,6 +76,8 @@ void germain::init_link () {
   int ret = CAEN_FELib_Open(("dig2:" + sibilla::evoke ()["host"].as<std::string>()).c_str(), &handle_);
 
   if (ret != CAEN_FELib_Success) ATTILA << " CAEN_FELib_Open(dig2:" << sibilla::evoke ()["host"].as<std::string>() << "): " << caen_error (ret);
+
+  send("/cmd/reset");
   usleep (100000);
 }
 
@@ -142,6 +131,7 @@ void germain::init_channels () {
     set("/par/ITLAPairLogic", "NONE");
     selftrigger_ = true;
   } else selftrigger_ = false;
+
   set("/par/ITLAMask", channels_selftrigger_mask);
 }
 
@@ -150,8 +140,11 @@ void germain::init_trigger () {
   set("/par/AcqTriggerSource", selftrigger_ ? "SwTrg|TrgIn|ITLA" : "SwTrg|TrgIn");
 
   uint32_t record_length = sibilla::evoke ()["gate-width"].as<int>();
+  uint32_t pre_trigger = record_length * (1 - sibilla::evoke ()["post-trigger"].as<int>() / 100.);
+  if (pre_trigger > 4095) ATTILA << " pre trigger can not exceed 4095 samples";
+
   set("/par/RecordLengthS", record_length);
-  set("/par/PreTriggerS", uint32_t(record_length * (1 - sibilla::evoke ()["post-trigger"].as<int>() / 100.)));
+  set("/par/PreTriggerS", pre_trigger);
   set("/par/StartSource", "SWcmd");
 
   sw_trigger_ = sibilla::evoke ()("software-trigger");
@@ -190,6 +183,19 @@ void germain::init_metadata () {
   aristotele_.threshold = sibilla::evoke ()["channel-threshold"].as<std::vector<int>>()[0];
 
 }
+
+void germain::start () {
+  send("/cmd/armacquisition");
+  send("/cmd/swstartacquisition");
+
+  start_time_ = std::chrono::system_clock::now ();
+}
+
+void germain::stop () {
+  send("/cmd/disarmacquisition");
+}
+
+
 std::vector<std::unique_ptr<evaristo>> germain::loop() {
   std::vector<std::unique_ptr<evaristo>> ev_v;
 
@@ -203,7 +209,6 @@ std::vector<std::unique_ptr<evaristo>> germain::loop() {
     
     size_t n_samples = 0;
     size_t n_channels = 0;
-
     int total_size = sizeof(evaristo)/sizeof(uint16_t);
     for (unsigned int k = 0; k < board_channels_; k++) { 
       total_size += sizes_[k];
