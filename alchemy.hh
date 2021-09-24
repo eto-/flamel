@@ -1,20 +1,20 @@
-// paracelsus is the base daq class
+// alchemy is the base daq class
 //   - init initialize the digitizer
 //   - star & stop manage the run
 //   - loop fetches new data from the digitizer
 //   - info returns metadata
-#ifndef PARACELSUS_HH
-#define PARACELSUS_HH
+#ifndef ALCHEMY_HH
+#define ALCHEMY_HH
 
 #include <vector>
 #include <memory>
 #include <chrono>
 #include "evaristo.hh"
 
-class paracelsus {
+class alchemy {
   public:
-    paracelsus () {}
-    virtual ~paracelsus () {}
+    alchemy () {}
+    virtual ~alchemy () {}
 
     virtual void init () = 0;
     virtual void start () = 0;

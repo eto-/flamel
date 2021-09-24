@@ -12,9 +12,9 @@
 #include <vector>
 #include <memory>
 #include <chrono>
-#include "paracelsus.hh"
+#include "alchemy.hh"
 
-class germain: public paracelsus {
+class germain: public alchemy {
   public:
     germain ();
     virtual ~germain ();

@@ -6,9 +6,9 @@
 #include <vector>
 #include <memory>
 #include <chrono>
-#include "paracelsus.hh"
+#include "alchemy.hh"
 
-class flamel: public paracelsus {
+class flamel: public alchemy {
   public:
     flamel ();
     virtual ~flamel ();
