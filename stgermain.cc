@@ -104,9 +104,9 @@ void stgermain::init_channels () {
     int dc_offset = dc_offsets[i];
     int channel_threshold = channel_thresholds[i];
 
-    if (ch > int(board_channels_) || ch < 0) ATTILA << " channel out of bound " << ch;
+    if (ch >= int(board_channels_) || ch < 0) ATTILA << " channel out of bound " << ch;
 
-    buffer_[i] = new uint16_t[record_length];
+    buffer_[ch] = new uint16_t[record_length];
 
     set("/ch/" + std::to_string(ch) + "/par/ChEnable", "true");
     set("/ch/" + std::to_string(ch) + "/par/DCOffset", float(dc_offset));
