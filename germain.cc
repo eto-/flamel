@@ -93,6 +93,7 @@ void germain::init_link () {
 }
 
 void germain::init_channels () {
+  bool positive_pulse = sibilla::evoke ()("positive-pulse");
   std::vector<int> channels = sibilla::evoke ()["channel-id"].as<std::vector<int>>();
   std::vector<int> channel_thresholds = sibilla::evoke ()["channel-threshold"].as<std::vector<int>>();
   std::vector<int> dc_offsets = sibilla::evoke ()["dc-offset"].as<std::vector<int>>();
@@ -108,23 +109,45 @@ void germain::init_channels () {
   set("/ch/0.." + std::to_string(board_channels_ - 1) + "/par/ChEnable", "false");
   uint32_t record_length = sibilla::evoke ()["gate-width"].as<int>();
 
+  uint64_t channels_selftrigger_mask = 0;
   for (unsigned int i = 0; i < channels.size(); i++) {
     int ch = channels[i];
     int dc_offset = dc_offsets[i];
-    //int channel_threshold = channel_thresholds[i];
+    int channel_threshold = channel_thresholds[i];
 
     if (ch > int(board_channels_) || ch < 0) ATTILA << " channel out of bound " << ch;
+
+    buffer_[i] = new uint16_t[record_length];
 
     set("/ch/" + std::to_string(ch) + "/par/ChEnable", "true");
     set("/ch/" + std::to_string(ch) + "/par/DCOffset", float(dc_offset));
 
-    buffer_[i] = new uint16_t[record_length];
+    if (channel_threshold < 0) continue;
+
+    set("/ch/" + std::to_string(ch) + "/par/TriggerThrMode", "Absolute");
+    set("/ch/" + std::to_string(ch) + "/par/TriggerThr", channel_threshold);
+    set("/ch/" + std::to_string(ch) + "/par/SelfTriggerEdge", positive_pulse ? "RISE" : "FALL");
+    channels_selftrigger_mask |= uint64_t(1) << ch;
   }
+
+  if (channels_selftrigger_mask) {
+    int majority = sibilla::evoke ()["majority"].as<int>();
+    if (majority < 1 || majority > int(board_channels_)) ATTILA << " majority has to be between 1 (no majority) and # channels";
+    if (majority == 1) set("/par/ITLAMainLogic", "OR");
+    else {
+      set("/par/ITLAMainLogic", "Majority");
+      set("ITLAMajorityLev", majority);
+    }
+
+    set("ITLAPairLogic", "NONE");
+    selftrigger_ = true;
+  } else selftrigger_ = false;
+  set("ITLAMask", channels_selftrigger_mask);
 }
 
 void germain::init_trigger () {
   set("/par/IOlevel", sibilla::evoke ()("nim") ? "NIM" : "TTL");
-  set("/par/AcqTriggerSource", "SwTrg|TrgIn");
+  set("/par/AcqTriggerSource", selftrigger_ ? "SwTrg|TrgIn|ITLA" : "SwTrg|TrgIn");
 
   uint32_t record_length = sibilla::evoke ()["gate-width"].as<int>();
   set("/par/RecordLengthS", record_length);
@@ -199,7 +222,7 @@ std::vector<std::unique_ptr<evaristo>> germain::loop() {
 
     ev->n_samples = n_samples;
     ev->n_channels = n_channels;
-    ev->time_tag = timestamp;
+    ev->time_tag = timestamp; // use only lower 32 bits
     ev->counter = trigger_id;
     ev->unused[0] = ev->unused[1] = ev->unused[2] = ev->unused[3] = 0;
     ev->cpu_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now () - start_time_).count ();
