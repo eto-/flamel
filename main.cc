@@ -4,7 +4,7 @@
 #include "sibilla.hh"
 #include "giotto.hh"
 #include "flamel.hh"
-#include "germain.hh"
+#include "stgermain.hh"
 #include "omero.hh"
 #include <TSystem.h>
 #include <chrono>
@@ -22,7 +22,7 @@ int main (int argc, char* argv[]) {
   giotto g;
   alchemy *a;
   if (sibilla::evoke ()["host"].as<std::string> ().empty ()) a = new flamel;
-  else a = new germain;
+  else a = new stgermain;
 
   a->init ();
 

@@ -1,12 +1,6 @@
-// Germain (Saint) manages the alchemy of the communications with the CAEN V2740 digitizer
-//   - init initialize the digitizer
-//   - star & stop manage the run
-//   - loop fetches new data from the digitizer
-//   - info returns metadata
-//   - loop fetches new data from the digitizer
-//   - info returns metadata
-#ifndef GERMAIN_HH
-#define GERMAIN_HH
+// stgermain manages the alchemy of the communications with the CAEN V2740 digitizer
+#ifndef STGERMAIN_HH
+#define STGERMAIN_HH
 
 #include <string>
 #include <vector>
@@ -14,10 +8,10 @@
 #include <chrono>
 #include "alchemy.hh"
 
-class germain: public alchemy {
+class stgermain: public alchemy {
   public:
-    germain ();
-    virtual ~germain ();
+    stgermain ();
+    virtual ~stgermain ();
 
     virtual void init ();
     virtual void start ();

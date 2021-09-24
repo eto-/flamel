@@ -9,7 +9,7 @@
 #include <string.h>
 #include <cmath>
 #include <stdlib.h>
-#include "germain.hh"
+#include "stgermain.hh"
 #include "attila.hh"
 #include "sibilla.hh"
 #include <iostream>
@@ -38,12 +38,12 @@ namespace {
   }
 }
 
-template<> void germain::set (const std::string& path, const char* value) { _set(path, std::string(value)); }
+template<> void stgermain::set (const std::string& path, const char* value) { _set(path, std::string(value)); }
 
-germain::germain(): buffer_(0), sizes_(0) {
+stgermain::stgermain(): buffer_(0), sizes_(0) {
 }
 
-germain::~germain() {
+stgermain::~stgermain() {
   close_link ();
 
   if (buffer_) {
@@ -53,7 +53,7 @@ germain::~germain() {
   delete[] sizes_;
 }
 
-void germain::init () {
+void stgermain::init () {
   init_link ();
 
   init_channels ();
@@ -65,12 +65,12 @@ void germain::init () {
   init_metadata ();
 }
 
-void germain::close_link () {
+void stgermain::close_link () {
   int ret = CAEN_FELib_Close(handle_);
   if (ret != CAEN_FELib_Success) ATTILA << " CAEN_DGTZ_CloseDigitizer(" << handle_ << "): " << caen_error (ret);
 }
 
-void germain::init_link () {
+void stgermain::init_link () {
   std::string host = sibilla::evoke ()["host"].as<std::string>();
   if (host.empty()) ATTILA << "No host specified for CAEN_FELib_Open";
   int ret = CAEN_FELib_Open(("dig2:" + sibilla::evoke ()["host"].as<std::string>()).c_str(), &handle_);
@@ -81,7 +81,7 @@ void germain::init_link () {
   usleep (100000);
 }
 
-void germain::init_channels () {
+void stgermain::init_channels () {
   bool positive_pulse = sibilla::evoke ()("positive-pulse");
   std::vector<int> channels = sibilla::evoke ()["channel-id"].as<std::vector<int>>();
   std::vector<int> channel_thresholds = sibilla::evoke ()["channel-threshold"].as<std::vector<int>>();
@@ -135,7 +135,7 @@ void germain::init_channels () {
   set("/par/ITLAMask", channels_selftrigger_mask);
 }
 
-void germain::init_trigger () {
+void stgermain::init_trigger () {
   set("/par/IOlevel", sibilla::evoke ()("nim") ? "NIM" : "TTL");
   set("/par/AcqTriggerSource", selftrigger_ ? "SwTrg|TrgIn|ITLA" : "SwTrg|TrgIn");
 
@@ -150,7 +150,7 @@ void germain::init_trigger () {
   sw_trigger_ = sibilla::evoke ()("software-trigger");
 }
 
-void germain::init_buffers () {
+void stgermain::init_buffers () {
   int ret = CAEN_FELib_GetHandle(handle_, "/endpoint/scope", &scope_);
   if (ret != CAEN_FELib_Success) ATTILA << " CAEN_FELib_GetHandle(/endpoint/scope): " << caen_error (ret);
 
@@ -174,7 +174,7 @@ void germain::init_buffers () {
   sizes_ = new size_t[board_channels_];
 }
 
-void germain::init_metadata () {
+void stgermain::init_metadata () {
   aristotele_.board = 2740;
   aristotele_.n_bits = 16;
   aristotele_.sampling_rate = 125;
@@ -184,19 +184,19 @@ void germain::init_metadata () {
 
 }
 
-void germain::start () {
+void stgermain::start () {
   send("/cmd/armacquisition");
   send("/cmd/swstartacquisition");
 
   start_time_ = std::chrono::system_clock::now ();
 }
 
-void germain::stop () {
+void stgermain::stop () {
   send("/cmd/disarmacquisition");
 }
 
 
-std::vector<std::unique_ptr<evaristo>> germain::loop() {
+std::vector<std::unique_ptr<evaristo>> stgermain::loop() {
   std::vector<std::unique_ptr<evaristo>> ev_v;
 
   for (int j = 0; j < 5; j++) {
@@ -239,17 +239,17 @@ std::vector<std::unique_ptr<evaristo>> germain::loop() {
   return ev_v;
 }
 
-void germain::_set (const std::string& path, const std::string& value) {
+void stgermain::_set (const std::string& path, const std::string& value) {
   int ret = CAEN_FELib_SetValue(handle_, path.c_str (), value.c_str ());
   if (ret != CAEN_FELib_Success) ATTILA << " CAEN_FELib_SetValue(" << path << ", " << value << "): " << caen_error (ret);
 }
 
-void germain::send (const std::string& path) {
+void stgermain::send (const std::string& path) {
   int ret = CAEN_FELib_SendCommand(handle_, path.c_str ());
   if (ret != CAEN_FELib_Success) ATTILA << " CAEN_FELib_SendCommand(" << path << "): " << caen_error (ret);
 }
 
-template<typename T> T germain::get (const std::string& path) {
+template<typename T> T stgermain::get (const std::string& path) {
   char buf[256];
   int ret = CAEN_FELib_GetValue(handle_, path.c_str (), buf);
   if (ret != CAEN_FELib_Success) ATTILA << " CAEN_FELib_GetValue(" << path << "): " << caen_error (ret);

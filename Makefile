@@ -4,7 +4,7 @@ CC = g++
 
 all: flamel
 
-flamel: flamel.o germain.o main.o attila.o sibilla.o evaristo.o giotto.o omero.o
+flamel: flamel.o stgermain.o main.o attila.o sibilla.o evaristo.o giotto.o omero.o
 
 clean:
-	rm -f flamel flamel.o germain.o main.o attila.o sibilla.o evaristo.o giotto.o omero.o
+	rm -f flamel flamel.o stgermain.o main.o attila.o sibilla.o evaristo.o giotto.o omero.o
