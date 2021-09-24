@@ -136,10 +136,10 @@ void germain::init_channels () {
     if (majority == 1) set("/par/ITLAMainLogic", "OR");
     else {
       set("/par/ITLAMainLogic", "Majority");
-      set("ITLAMajorityLev", majority);
+      set("/par/ITLAMajorityLev", majority);
     }
 
-    set("ITLAPairLogic", "NONE");
+    set("/par/ITLAPairLogic", "NONE");
     selftrigger_ = true;
   } else selftrigger_ = false;
   set("ITLAMask", channels_selftrigger_mask);
