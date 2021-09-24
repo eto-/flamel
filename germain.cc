@@ -142,7 +142,7 @@ void germain::init_channels () {
     set("/par/ITLAPairLogic", "NONE");
     selftrigger_ = true;
   } else selftrigger_ = false;
-  set("ITLAMask", channels_selftrigger_mask);
+  set("/par/ITLAMask", channels_selftrigger_mask);
 }
 
 void germain::init_trigger () {
