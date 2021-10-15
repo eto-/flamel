@@ -136,15 +136,15 @@ void flamel::init_channels () {
   std::vector<int> channels = sibilla::evoke ()["channel-id"].as<std::vector<int>>();
   std::vector<int> channel_thresholds = sibilla::evoke ()["channel-threshold"].as<std::vector<int>>();
   std::vector<int> dc_offsets = sibilla::evoke ()["dc-offset"].as<std::vector<int>>();
-  if (channel_thresholds.size () == 1) for (unsigned int i = 1; i < channels.size (); i++) channel_thresholds.push_back(channel_thresholds[0]);
+  if (channel_thresholds.size () == 1) for (size_t i = 1; i < channels.size (); i++) channel_thresholds.push_back(channel_thresholds[0]);
   if (channel_thresholds.size () != channels.size ()) ATTILA << "channels.size != channel_thresholds.size";
-  if (dc_offsets.size () == 1) for (unsigned int i = 1; i < channels.size (); i++) dc_offsets.push_back(dc_offsets[0]);
+  if (dc_offsets.size () == 1) for (size_t i = 1; i < channels.size (); i++) dc_offsets.push_back(dc_offsets[0]);
   if (dc_offsets.size () != channels.size ()) ATTILA << "channels.size != dc_offsets.size";
 
   uint16_t channels_mask = 0;
   bool enable_channel_threshold = false;
 
-  for (unsigned int i = 0; i < channels.size(); i++) {
+  for (size_t i = 0; i < channels.size(); i++) {
     int ch = channels[i];
     int channel_threshold = channel_thresholds[i];
     int dc_offset = dc_offsets[i];
@@ -280,8 +280,8 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
       if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_DecodeEvent(" << handle_ << "," << event_ptr << ", NULL): " << caen_error (err); 
 
       std::unique_ptr<evaristo> ev;
-      unsigned int n_samples = 0;
-      unsigned int n_channels = 0;
+      size_t n_samples = 0;
+      size_t n_channels = 0;
       if (aristotele_.n_bits > 8) {
 	CAEN_DGTZ_UINT16_EVENT_t *decoded_event = reinterpret_cast<CAEN_DGTZ_UINT16_EVENT_t*>(decoded_event_);
 
@@ -314,7 +314,7 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
 	uint16_t *ptr = ev->samples;
 	for (int k = 0; k < MAX_UINT8_CHANNEL_SIZE; k++) 
 	  if (decoded_event->ChSize[k] == n_samples) {
-            for (unsigned int z = 0; z < n_samples; z++) ptr[z] = decoded_event->DataChannel[k][z];
+            for (size_t z = 0; z < n_samples; z++) ptr[z] = decoded_event->DataChannel[k][z];
 	    ptr += n_samples;
             n_channels ++;
 	  }

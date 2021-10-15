@@ -9,9 +9,9 @@ std::ostream & operator << (std::ostream &o, const evaristo &e) {
   o << "time_tag: " << e.time_tag << std::endl;
   o << "cpu_time_ms: " << e.cpu_time_ms << std::endl;  
   //o << "samples" << std::endl;
-  for (unsigned int i = 0; i < e.n_samples; i++) {
+  for (size_t i = 0; i < e.n_samples; i++) {
     o << e.samples[i];
-    for (unsigned int k = 1; k < e.n_channels; k++) o << "	" << e.samples[i + k * e.n_samples];
+    for (size_t k = 1; k < e.n_channels; k++) o << "	" << e.samples[i + k * e.n_samples];
     o << std::endl;
   }
 

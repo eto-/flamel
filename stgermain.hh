@@ -22,7 +22,7 @@ class stgermain: public alchemy {
   private:
     uint64_t handle_, scope_;
     bool sw_trigger_, selftrigger_;
-    unsigned int board_channels_;
+    size_t board_channels_;
     uint16_t **buffer_;
     size_t *sizes_;
     /*

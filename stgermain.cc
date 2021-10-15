@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <sstream>
 #include <iostream>
-#include <string.h>
 #include <cmath>
 #include <stdlib.h>
 #include "stgermain.hh"
@@ -47,7 +46,7 @@ stgermain::~stgermain() {
   close_link ();
 
   if (buffer_) {
-    for (unsigned int i = 0; i < board_channels_; ++i) delete[] buffer_[i];
+    for (size_t i = 0; i < board_channels_; ++i) delete[] buffer_[i];
     delete[] buffer_;
   }
   delete[] sizes_;
@@ -86,20 +85,20 @@ void stgermain::init_channels () {
   std::vector<int> channels = sibilla::evoke ()["channel-id"].as<std::vector<int>>();
   std::vector<int> channel_thresholds = sibilla::evoke ()["channel-threshold"].as<std::vector<int>>();
   std::vector<int> dc_offsets = sibilla::evoke ()["dc-offset"].as<std::vector<int>>();
-  if (channel_thresholds.size () == 1u) for (unsigned int i = 1; i < channels.size (); i++) channel_thresholds.push_back(channel_thresholds[0]);
+  if (channel_thresholds.size () == 1u) for (size_t i = 1; i < channels.size (); i++) channel_thresholds.push_back(channel_thresholds[0]);
   if (channel_thresholds.size () != channels.size ()) ATTILA << " channels.size != channel_thresholds.size";
-  if (dc_offsets.size () == 1u) for (unsigned int i = 1; i < channels.size (); i++) dc_offsets.push_back(dc_offsets[0]);
+  if (dc_offsets.size () == 1u) for (size_t i = 1; i < channels.size (); i++) dc_offsets.push_back(dc_offsets[0]);
   if (dc_offsets.size () != channels.size ()) ATTILA << " channels.size != dc_offsets.size";
 
   board_channels_ = get<uint32_t>("/par/NumCh");
   buffer_ = new uint16_t*[board_channels_];
-  for (unsigned int i = 0; i < board_channels_; i++) buffer_[i] = 0;
+  for (size_t i = 0; i < board_channels_; i++) buffer_[i] = 0;
 
   set("/ch/0.." + std::to_string(board_channels_ - 1) + "/par/ChEnable", "false");
   uint32_t record_length = sibilla::evoke ()["gate-width"].as<int>();
 
   uint64_t channels_selftrigger_mask = 0;
-  for (unsigned int i = 0; i < channels.size(); i++) {
+  for (size_t i = 0; i < channels.size(); i++) {
     int ch = channels[i];
     int dc_offset = dc_offsets[i];
     int channel_threshold = channel_thresholds[i];
@@ -210,7 +209,7 @@ std::vector<std::unique_ptr<evaristo>> stgermain::loop() {
     size_t n_samples = 0;
     size_t n_channels = 0;
     int total_size = sizeof(evaristo)/sizeof(uint16_t);
-    for (unsigned int k = 0; k < board_channels_; k++) { 
+    for (size_t k = 0; k < board_channels_; k++) { 
       total_size += sizes_[k];
       if (sizes_[k] > 0) n_samples = sizes_[k];
     }
@@ -218,7 +217,7 @@ std::vector<std::unique_ptr<evaristo>> stgermain::loop() {
     std::unique_ptr<evaristo> ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new uint16_t[total_size]));
 
     uint16_t *ptr = ev->samples;
-    for (unsigned int k = 0; k < board_channels_; k++) 
+    for (size_t k = 0; k < board_channels_; k++) 
       if (sizes_[k] == n_samples && buffer_[k]) {
         for (size_t z = 0; z < n_samples; z++) ptr[z] = buffer_[k][z];
         ptr += n_samples;
