@@ -28,6 +28,7 @@ class flamel {
     void *decoded_event_;
     bool sw_trigger_,wait_irq_;
     metadata metadata_;
+    uint32_t event_counter_;
     std::chrono::time_point<std::chrono::system_clock> start_time_; 
 
 
@@ -38,6 +39,7 @@ class flamel {
     void init_metadata ();
     void close_link ();
 
+    std::unique_ptr<evaristo> pad_event();
     std::vector<std::unique_ptr<evaristo>> emulate_loop ();
 
     uint32_t get_register (uint16_t reg); 

@@ -22,7 +22,7 @@ giotto::~giotto () {
 }
 
 void giotto::draw (evaristo* ev) {
-  if (!window || !ev->n_channels) return;
+  if (!window || !ev->n_channels || !ev->n_samples) return;
 
   window->cd();
 

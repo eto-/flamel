@@ -236,6 +236,8 @@ void flamel::init_metadata () {
 }
 
 void flamel::start () {
+  event_counter_ = 0;
+
   if (!emulate_hw_) {
     CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_SWStartAcquisition (handle_);
     if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SWStartAcquisition(" << handle_ << "): " << caen_error (err);
@@ -280,6 +282,13 @@ std::vector<std::unique_ptr<evaristo>> flamel::loop() {
       char *event_ptr;
       err = CAEN_DGTZ_GetEventInfo (handle_, event_buffer_, gross_size, i, &event_info, &event_ptr);
       if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_GetEventInfo(" << handle_ << "," << event_buffer_ << "," << gross_size << "," << i << "," << event_info.EventCounter << "," << event_ptr << "): " << caen_error (err);
+
+      if (event_info.EventCounter != event_counter_) {
+        int32_t diff = event_info.EventCounter  - event_counter_;
+        if (diff < 0 || diff > 10) ATTILA << "Anomalous jump " << diff;
+
+        while (diff--) ev_v.push_back (std::move(pad_event()));
+      }
 
       CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_DecodeEvent (handle_, event_ptr, &decoded_event_);
       if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_DecodeEvent(" << handle_ << "," << event_ptr << ", NULL): " << caen_error (err); 
@@ -409,4 +418,16 @@ std::vector<std::unique_ptr<evaristo>> flamel::emulate_loop () {
   
   usleep (10000);
   return ev_v;
+}
+
+std::unique_ptr<evaristo> flamel::pad_event () {
+  std::unique_ptr<evaristo> ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new uint16_t[sizeof(evaristo)/2]));
+  ev->n_samples = 0;
+  ev->n_channels = 0;
+  ev->time_tag = 0;
+  ev->counter = event_counter_ ++;
+  ev->unused[0] = ev->unused[1] = ev->unused[2] = ev->unused[3] = 0;
+  ev->cpu_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now () - start_time_).count ();
+
+  return ev;
 }
