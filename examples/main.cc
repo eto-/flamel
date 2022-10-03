@@ -4,10 +4,10 @@
 int main(int, char *argv[]) {
   wav_file f(argv[1]);
 
-  f.next();
-  f.next();
-  f.next();
-  f.next();
+  for (int i = 0; i < 10 && !f.eof(); ++i) {
+    auto e = f.next();
+    std::cout << e.counter << " " << e.data[0][0] << std::endl; 
+  }
 
   return 0;
 }
