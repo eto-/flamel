@@ -10,7 +10,6 @@ class wav_file {
     wav_file(const std::string& fname);
 
     ssize_t length() const { return _length; }
-    int n_samples() const { return _n_sample; }
     int sample_rate() const { return _sample_rate; }
     int bits() const { return _bits; }
 

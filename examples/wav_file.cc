@@ -2,7 +2,6 @@
 #include <cstring>
 
 wav_file::wav_file(const std::string& fname): _file(fname.c_str()), _next_offset(0) {
-  _n_sample = _file.frames ();
   _sample_rate = _file.samplerate ();
   _bits = 16;
   _date = _file.getString (SF_STR_DATE);
