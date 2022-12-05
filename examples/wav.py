@@ -126,7 +126,20 @@ class WAV:
 
 
 if __name__ == "__main__":
-    w = WAV({'file':'../ds_nuvhd_lf_3x_dev7-6_8x12mm2_87K_33.9V_7OV_2.wav'})
-    for i in w:
-        print(i[0])
+    import sys
+    import numpy as np
+    from statistics import mean
+    import matplotlib.pyplot as plt
+
+    f = WAV({'file':sys.argv[1]})
+    v_min = []
+    for i in f:
+        #print(i[0])
+        w = i[1][0].wav
+        b = mean(w[2800:2900])
+        v_min.append(b - min(w[2950:3050]))
+
+    h_min = plt.hist(v_min, list(range(0,1024)))
+    plt.show()
+
 
