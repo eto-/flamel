@@ -39,7 +39,8 @@ omero::omero (const aristotele& m) {
     *o_txt_ << m;
   } else {
     if (zip) ATTILA << "compressed wav files not supported";
-    else o_wav_ = std::unique_ptr<SndfileHandle> (new SndfileHandle(filename_, SFM_WRITE, SF_FORMAT_WAV | SF_FORMAT_PCM_16, 1, m.sampling_rate));
+    o_wav_ = std::unique_ptr<SndfileHandle> (new SndfileHandle(filename_, SFM_WRITE, SF_FORMAT_WAV | SF_FORMAT_PCM_16, 1, m.sampling_rate));
+    if (o_wav_->error()) ATTILA << std::string("Open wav file error: ") + o_wav_->strError ();
     o_wav_->setString (SF_STR_TITLE, std::to_string(sibilla::evoke ()["run"].as<int>()).c_str ());
     o_wav_->setString (SF_STR_DATE, date.c_str ());
     if (sibilla::evoke ()("comment")) o_wav_->setString (SF_STR_COMMENT, sibilla::evoke ()["comment"].as<std::string>().c_str ());
