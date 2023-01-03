@@ -39,18 +39,19 @@ int main (int argc, char* argv[]) {
   int prescale = sibilla::evoke ()["prescale"].as<int>();
 
   std::chrono::seconds seconds(sibilla::evoke ()["progress"].as<int>());
-  auto start = std::chrono::system_clock::now ();
-  auto next = start + std::chrono::duration_cast<std::chrono::seconds>(seconds);
+  auto start_t = std::chrono::system_clock::now ();
+  auto next_t = start_t + std::chrono::duration_cast<std::chrono::seconds>(seconds);
 
   int total = sibilla::evoke ()["events"].as<int>();
-  int n = 0;
+  int n = 0, prev_n = 0;
   while (n < total) {
     if (quit) break;
 
-    if (seconds.count () > 0 && std::chrono::system_clock::now () > next) {
-      float dt = std::chrono::duration_cast<std::chrono::seconds>(next - start).count();
-      std::cerr << "Processed " << n << " events in " << dt << " s at rate of " << n / dt << " cps" << std::endl;
-      next += std::chrono::duration_cast<std::chrono::seconds>(seconds);
+    if (seconds.count () > 0 && std::chrono::system_clock::now () > next_t) {
+      float dt = std::chrono::duration_cast<std::chrono::seconds>(next_t - start_t).count();
+      std::cerr << "Processed " << n << " events in " << dt << " s at rate of " << n / dt << " (" << float(n - prev_n) / seconds.count() << ") cps" << std::endl;
+      next_t += std::chrono::duration_cast<std::chrono::seconds>(seconds);
+      prev_n = n;
     }
     
     sigprocmask(SIG_BLOCK, &mask, &orig_mask);
@@ -74,7 +75,7 @@ int main (int argc, char* argv[]) {
       o.write (e.get ());
     }
   }
-  float dt = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now () - start).count();
+  float dt = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now () - start_t).count();
   std::cout << "Acquired " << n << " events in " << dt << " s at rate of " << n / dt << " cps" << std::endl;
 
   a->stop ();
