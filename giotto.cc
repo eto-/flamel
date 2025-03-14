@@ -5,10 +5,15 @@
 #include "giotto.hh"
 #include "evaristo.hh"
 #include "sibilla.hh"
+#include "attila.hh"
 #include <iostream>
+#include <cstdlib>
 
 giotto::giotto () {
   if (sibilla::evoke ()("quiet")) { window = 0; return; }
+
+  if (!std::getenv("DISPLAY")) ATTILA << "DISPLAY not set";
+  
 
   int arg = 0;
   app = std::unique_ptr<TApplication>(new TApplication("application",&arg,0)); 
