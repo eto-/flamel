@@ -141,7 +141,7 @@ void flamel::init_channels () {
   if (dc_offsets.size () == 1) for (size_t i = 1; i < channels.size (); i++) dc_offsets.push_back(dc_offsets[0]);
   if (dc_offsets.size () != channels.size ()) ATTILA << "channels.size != dc_offsets.size";
 
-  uint16_t channels_mask = 0;
+  uint16_t channels_mask = 0, channels_threshold_mask = 0;
   bool enable_channel_threshold = false;
 
   for (size_t i = 0; i < channels.size(); i++) {
@@ -163,13 +163,14 @@ void flamel::init_channels () {
     if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetTriggerPolarity(" << handle_ << "," << ch << "," << (positive_pulse ? CAEN_DGTZ_TriggerOnRisingEdge : CAEN_DGTZ_TriggerOnFallingEdge) << "): " << caen_error (err);
 
     enable_channel_threshold = true;
+    channels_threshold_mask |= 1 << ch;
   }
 
   err = CAEN_DGTZ_SetChannelEnableMask (handle_, channels_mask);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelEnableMask(" << handle_ << "," << channels_mask << "): " << caen_error (err);
 
-  err = CAEN_DGTZ_SetChannelSelfTrigger (handle_, !enable_channel_threshold ? CAEN_DGTZ_TRGMODE_DISABLED : CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT, channels_mask);
-  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelSelfTrigger(" << handle_ << (!enable_channel_threshold ? "CAEN_DGTZ_TRGMODE_DISABLED" : "CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT") << "," << channels_mask << "): " << caen_error (err);
+  err = CAEN_DGTZ_SetChannelSelfTrigger (handle_, !enable_channel_threshold ? CAEN_DGTZ_TRGMODE_DISABLED : CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT, channels_threshold_mask);
+  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetChannelSelfTrigger(" << handle_ << (!enable_channel_threshold ? "CAEN_DGTZ_TRGMODE_DISABLED" : "CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT") << "," << channels_threshold_mask << "): " << caen_error (err);
 
   int majority = sibilla::evoke ()["majority"].as<int>();
   if (majority < 1) ATTILA << " majority has to be between 1 (no majority) and # channels";
@@ -197,6 +198,7 @@ void flamel::init_trigger () {
 
   err = CAEN_DGTZ_SetAcquisitionMode (handle_, CAEN_DGTZ_SW_CONTROLLED);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_SetAcquisitionMode(" << handle_ << "," << CAEN_DGTZ_SW_CONTROLLED << "): " << caen_error (err);
+  set_register_bits(0x8100, (1 << 3) | (1 << 5)); // count all triggers + ONE BUFFER FREE full
 
   sw_trigger_ = sibilla::evoke ()("software-trigger");
 }
