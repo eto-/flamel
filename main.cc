@@ -35,23 +35,28 @@ int main (int argc, char* argv[]) {
 
   sleep(3);
   a->start ();
-  int c = 0;
-  int prescale = sibilla::evoke ()["prescale"].as<int>();
+  int max_events = sibilla::evoke ()["events"].as<int>();
+  int max_duration = sibilla::evoke ()["duration"].as<int>();
 
-  std::chrono::seconds seconds(sibilla::evoke ()["progress"].as<int>());
+  int event_count = 0;
   auto start_t = std::chrono::system_clock::now ();
-  auto next_t = start_t + std::chrono::duration_cast<std::chrono::seconds>(seconds);
+  float run_t = 0;
 
-  int total = sibilla::evoke ()["events"].as<int>();
-  int n = 0, prev_n = 0;
-  while (n < total) {
+  int prev_n, progress_dt = sibilla::evoke ()["progress"].as<int>();
+  auto next_t = start_t + std::chrono::duration_cast<std::chrono::seconds>(std::chrono::seconds(progress_dt));
+  int prescale_plot = sibilla::evoke ()["prescale"].as<int>();
+
+  while (1) {
+    run_t = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now () - start_t).count();
+
     if (quit) break;
+    if (max_events > 0 && event_count >= max_events) break;
+    if (max_duration > 0 && run_t >= max_duration) break;
 
-    if (seconds.count () > 0 && std::chrono::system_clock::now () > next_t) {
-      float dt = std::chrono::duration_cast<std::chrono::seconds>(next_t - start_t).count();
-      std::cerr << "Processed " << n << " events in " << dt << " s at rate of " << n / dt << " (" << float(n - prev_n) / seconds.count() << ") cps" << std::endl;
-      next_t += std::chrono::duration_cast<std::chrono::seconds>(seconds);
-      prev_n = n;
+    if (progress_dt > 0 && std::chrono::system_clock::now () > next_t) {
+      std::cerr << "Processed " << event_count << " events in " << run_t << " s at rate of " << event_count / run_t << " (" << float(event_count - prev_n) / progress_dt << ") cps" << std::endl;
+      next_t += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::seconds(progress_dt));
+      prev_n = event_count;
     }
     
     sigprocmask(SIG_BLOCK, &mask, &orig_mask);
@@ -68,15 +73,15 @@ int main (int argc, char* argv[]) {
 
     sigprocmask(SIG_SETMASK, &orig_mask, NULL);
 
-    n += v.size ();
+    event_count += v.size ();
     for (size_t i = 0; i < v.size (); i++) {
       std::unique_ptr<evaristo> e = std::move(v[i]);
-      if (!(c++ % prescale)) g.draw (e.get ());
+      if (!(event_count++ % prescale_plot)) g.draw (e.get ());
       o.write (e.get ());
     }
   }
-  float dt = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now () - start_t).count();
-  std::cout << "Acquired " << n << " events in " << dt << " s at rate of " << n / dt << " cps" << std::endl;
+
+  std::cout << "Acquired " << event_count << " events in " << run_t << " s at rate of " << event_count / run_t << " cps" << std::endl;
 
   a->stop ();
 }
