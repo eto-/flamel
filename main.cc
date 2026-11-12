@@ -73,7 +73,6 @@ int main (int argc, char* argv[]) {
 
     sigprocmask(SIG_SETMASK, &orig_mask, NULL);
 
-    event_count += v.size ();
     for (size_t i = 0; i < v.size (); i++) {
       std::unique_ptr<evaristo> e = std::move(v[i]);
       if (!(event_count++ % prescale_plot)) g.draw (e.get ());
