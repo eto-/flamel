@@ -9,7 +9,8 @@
 #include <TSystem.h>
 #include <chrono>
 
-bool quit = false;
+volatile sig_atomic_t quit = false;
+
 int main (int argc, char* argv[]) { 
   gSystem->ResetSignal(kSigSegmentationViolation);
   gSystem->ResetSignal(kSigIllegalInstruction);
@@ -28,7 +29,7 @@ int main (int argc, char* argv[]) {
 
   omero o(a->info ());
 
-  signal(SIGINT, [](int signum) { std::cerr << "signal caught, clean exiting" << std::endl; quit = true; });
+  signal(SIGINT, [](int signum) { quit = true; });
   sigset_t mask, orig_mask;
   sigemptyset (&mask);
   sigaddset (&mask, SIGINT);
@@ -42,14 +43,17 @@ int main (int argc, char* argv[]) {
   auto start_t = std::chrono::system_clock::now ();
   float run_t = 0;
 
-  int prev_n, progress_dt = sibilla::evoke ()["progress"].as<int>();
+  int prev_n = 0, progress_dt = sibilla::evoke ()["progress"].as<int>();
   auto next_t = start_t + std::chrono::duration_cast<std::chrono::seconds>(std::chrono::seconds(progress_dt));
   int prescale_plot = sibilla::evoke ()["prescale"].as<int>();
 
   while (1) {
     run_t = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now () - start_t).count();
 
-    if (quit) break;
+    if (quit) {
+      std::cerr << "signal caught, clean exiting" << std::endl;
+      break;
+    }
     if (max_events > 0 && event_count >= max_events) break;
     if (max_duration > 0 && run_t >= max_duration) break;
 

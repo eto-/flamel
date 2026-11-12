@@ -23,7 +23,7 @@ omero::omero (const aristotele& m) {
   if ((filename_.size () > 4 && filename_.substr(filename_.size () - 4) == ".txt") || 
       (filename_.size () > 7 && filename_.substr(filename_.size () - 7) == ".txt.gz")) txt = true;
 
-  if (filename_.size () < 3 || filename_.substr(filename_.size () - 3) == ".gz") filename_ += ".gz";
+  if (zip && (filename_.size () < 3 || filename_.substr(filename_.size () - 3) != ".gz")) filename_ += ".gz";
 
   if (wav == txt) ATTILA << "no file format specified";
 

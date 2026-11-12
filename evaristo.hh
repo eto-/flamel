@@ -9,6 +9,8 @@ struct evaristo {
   uint16_t marker, header_length;
   uint32_t counter, time_tag, n_samples, cpu_time_ms, n_channels, unused[4];
   uint16_t samples[0];
+
+  static void operator delete (void *p) { ::operator delete[] (p); }
 };
 
 std::ostream & operator << (std::ostream&, const evaristo&);

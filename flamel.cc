@@ -52,6 +52,8 @@ namespace {
   }
   static std::map<CAEN_DGTZ_BoardFamilyCode_t, int> sample_rates_MHz{{ CAEN_DGTZ_XX724_FAMILY_CODE, 100 },
             { CAEN_DGTZ_XX721_FAMILY_CODE, 500 },
+            { CAEN_DGTZ_XX725_FAMILY_CODE, 250 },
+            { CAEN_DGTZ_XX730_FAMILY_CODE, 500 },
             { CAEN_DGTZ_XX731_FAMILY_CODE, 500 },
             { CAEN_DGTZ_XX720_FAMILY_CODE, 250 },
             { CAEN_DGTZ_XX740_FAMILY_CODE, 65 },
@@ -62,6 +64,8 @@ namespace {
 
   static std::map<CAEN_DGTZ_BoardFamilyCode_t, int> v17xx_modules{{ CAEN_DGTZ_XX724_FAMILY_CODE, 24 },
             { CAEN_DGTZ_XX721_FAMILY_CODE, 21 },
+            { CAEN_DGTZ_XX725_FAMILY_CODE, 25 },
+            { CAEN_DGTZ_XX730_FAMILY_CODE, 30 },
             { CAEN_DGTZ_XX731_FAMILY_CODE, 31 },
             { CAEN_DGTZ_XX720_FAMILY_CODE, 20 },
             { CAEN_DGTZ_XX740_FAMILY_CODE, 40 },
@@ -215,6 +219,9 @@ void flamel::init_buffers () {
 
   err = CAEN_DGTZ_MallocReadoutBuffer (handle_, &event_buffer_, &buffer_size_);
   if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_MallocReadoutBuffer(" << handle_ << "): " << caen_error (err);
+
+  err = CAEN_DGTZ_AllocateEvent (handle_, &decoded_event_);
+  if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_AllocateEvent(" << handle_ << "): " << caen_error (err);
 }
 
 void flamel::init_metadata () {
@@ -224,9 +231,9 @@ void flamel::init_metadata () {
 
   std::cout << "found digitizer " << BoardInfo.SerialNumber << " model " << BoardInfo.ModelName << " ROC # " << BoardInfo.ROC_FirmwareRel << " AMC # " << BoardInfo.AMC_FirmwareRel << std::endl;
 
-  aristotele_.board = 1700 + v17xx_modules[(CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode))];
+  aristotele_.board = 1700 + v17xx_modules.at(CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode));
   aristotele_.n_bits = BoardInfo.ADC_NBits;
-  aristotele_.sampling_rate = sample_rates_MHz[CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode)] * (1 + 1 * sibilla::evoke ()("des-mode"));
+  aristotele_.sampling_rate = sample_rates_MHz.at(CAEN_DGTZ_BoardFamilyCode_t(BoardInfo.FamilyCode)) * (1 + 1 * sibilla::evoke ()("des-mode"));
   aristotele_.gate_length = sibilla::evoke ()["gate-width"].as<int>();
   aristotele_.post_trigger = sibilla::evoke ()["post-trigger"].as<int>();
   aristotele_.threshold = sibilla::evoke ()["channel-threshold"].as<std::vector<int>>()[0];
@@ -382,7 +389,7 @@ bool flamel::wait_irq () {
     BRENNO << " ignoring CAEN_DGTZ_GenericError in CAEN_DGTZ_IRQWait";
     return false;
   }
-  else if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_IRQWait(" << handle_ << "," << 100 << "): " << caen_error (err);
+  else if (err != CAEN_DGTZ_Success) ATTILA << " CAEN_DGTZ_IRQWait(" << handle_ << "," << 10 << "): " << caen_error (err);
 
   return true;
 }
@@ -394,10 +401,12 @@ std::vector<std::unique_ptr<evaristo>> flamel::emulate_loop () {
   int n = sibilla::evoke ()["gate-width"].as<int>();
 
   std::unique_ptr<evaristo> ev = std::unique_ptr<evaristo>(reinterpret_cast<evaristo*>(new uint16_t[sizeof(evaristo)/2 + n]));
+  ev->n_channels = 1;
   ev->n_samples = n;
   ev->time_tag = ++c * 100;
   ev->counter = c;
   ev->cpu_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now () - start_time_).count ();
+  ev->unused[0] = ev->unused[1] = ev->unused[2] = ev->unused[3] = 0;
 
   int f = rand ();
   for (int i = 0; i < n; i++) ev->samples[i] = 512 + 400 * sin (2 * 3.14 * i / 500 + f);
